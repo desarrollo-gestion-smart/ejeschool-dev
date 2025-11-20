@@ -1,7 +1,5 @@
-import Login from './src/screens/Login';
+import AppNavigator from './src/navigation/AppNavigation';
 
-function App() {
-  return <Login />;
+export default function App() {
+  return <AppNavigator />;
 }
-
-export default App;

@@ -1,7 +1,7 @@
 module.exports = {
   project: {
     android: {
-      sourceDir: './EjeSchool/android',
+      sourceDir: './android',
     },
     ios: {
       sourceDir: './EjeSchool/ios',

@@ -1,0 +1,231 @@
+import React, { useState } from 'react';
+import {
+  StatusBar,
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  Image,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+import { GoBack } from '../../components/GoBack';
+
+// Definí tus rutas aquí (podes moverlo a un archivo types si querés)
+type RootStackParamList = {
+  Login: undefined;
+  VehicleVerification: undefined;
+  Home: undefined;
+  // otras pantallas...
+};
+
+type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+export default function Login() {
+  const navigation = useNavigation<LoginScreenNavigationProp>();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = () => {
+    // Redirige a la pantalla de verificación de vehículo
+    navigation.replace('VehicleVerification');
+    // "replace" es mejor que "navigate" porque evita que el usuario vuelva al login con el botón atrás
+  };
+
+  return (
+    <>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <GoBack />
+
+          <View style={styles.skyline}>
+            <View style={styles.building1} />
+            <View style={styles.building2} />
+            <View style={styles.building3} />
+          </View>
+
+          <View style={styles.logoContainer}>
+            <View style={styles.logoWrapper}>
+              <Image
+                source={require('../../assets/logo-s.png')}
+                style={styles.logo}
+              />
+            </View>
+          </View>
+
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Iniciar Sesión</Text>
+            <View style={styles.titleBar} />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#999"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Contraseña"
+              placeholderTextColor="#999"
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+
+            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+              <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.terms}>
+            Al hacer clic en iniciar, acepta nuestros Términos y condiciones
+          </Text>
+        </SafeAreaView>
+      </View>
+    </>
+  );
+}
+
+const styles = StyleSheet.create({
+  backButton: {
+    padding: 10,
+    marginLeft: 10,
+    marginTop: 5,
+  },
+
+  backButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#6A11CB',
+  },
+  safeArea: {
+    flex: 1,
+  },
+  skyline: {
+    height: 100,
+    backgroundColor: '#4C1D95',
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'flex-end',
+    paddingBottom: 10,
+  },
+  building1: {
+    width: 30,
+    height: 60,
+    backgroundColor: '#6A11CB',
+  },
+  building2: {
+    width: 40,
+    height: 80,
+    backgroundColor: '#6A11CB',
+  },
+  building3: {
+    width: 25,
+    height: 50,
+    backgroundColor: '#6A11CB',
+  },
+  logoContainer: {
+    marginBottom: 20,
+    alignSelf: 'center',
+    marginTop: -50,
+  },
+  logoWrapper: {
+    shadowColor: '#110c0cff',
+    width: 200,
+    height: 220,
+    shadowOffset: { width: 0, height: 5 },
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowOpacity: 0.3,
+    elevation: 10,
+    borderRadius: 80,
+  },
+  logo: {
+    width: '100%',
+    height: '100%',
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    marginHorizontal: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+    top: 50,
+  },
+  cardTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  titleBar: {
+    width: 50,
+    height: 3,
+    backgroundColor: '#000',
+    marginBottom: 20,
+  },
+  input: {
+    width: '100%',
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 15,
+    fontSize: 16,
+  },
+  loginButton: {
+    backgroundColor: '#6A11CB',
+    paddingVertical: 15,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  loginButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  registerButton: {
+    backgroundColor: '#626262',
+    paddingVertical: 15,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  registerButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  terms: {
+    top: 100,
+    color: 'white',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 20,
+    marginHorizontal: 20,
+  },
+});
