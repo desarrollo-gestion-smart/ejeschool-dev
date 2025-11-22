@@ -32,13 +32,7 @@ const StudentCard: React.FC<StudentCardProps> = ({
       </View>
 
       <View style={styles.actionButtonContainer}>
-        <Text
-          style={{
-            color: '#fff',
-            fontSize: 20,
-            textAlign: 'center',
-          }}
-        >
+        <Text style={styles.actionButtonText}>
           {'>'}
         </Text>
       </View>
@@ -47,23 +41,30 @@ const StudentCard: React.FC<StudentCardProps> = ({
 };
 
 const StudentListSection: React.FC = () => {
-  const handleStudentPress = (name: string) => {
+  const handleStudentPress = React.useCallback((name: string) => {
     console.log(`Abriendo detalles de ${name}`);
-  };
+  }, []);
+
+  const renderItem = React.useCallback(
+    ({ item }: { item: { id: string; name: string; uri: string } }) => (
+      <StudentCard
+        name={item.name}
+        imageUri={item.uri}
+        onPress={() => handleStudentPress(item.name)}
+      />
+    ),
+    [handleStudentPress]
+  );
+
+  const renderSeparator = React.useCallback(() => <View style={styles.separator} />, []);
 
   return (
     <View style={styles.listSection}>
       <FlatList
         data={STUDENT_DATA_LIST}
         keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <StudentCard
-            name={item.name}
-            imageUri={item.uri}
-            onPress={() => handleStudentPress(item.name)}
-          />
-        )}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        renderItem={renderItem}
+        ItemSeparatorComponent={renderSeparator}
         scrollEnabled={false}
       />
     </View>
@@ -198,6 +199,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  actionButtonText: { color: '#fff', fontSize: 20, textAlign: 'center' },
 });
 
 export default EjeSchoolComponent;

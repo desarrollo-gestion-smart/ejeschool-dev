@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   StatusBar,
   StyleSheet,
@@ -6,20 +6,22 @@ import {
   Text,
   TouchableOpacity,
   TextInput,
-  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
+  ScrollView,
+  Alert,
 } from 'react-native';
+import ResponsiveLogo from '../../components/ResponsiveLogo';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { GoBack } from '../../components/GoBack';
+import { GoBack } from '../../components/Button/GoBack';
 
-// Definí tus rutas aquí (podes moverlo a un archivo types si querés)
 type RootStackParamList = {
-  Login: undefined;
-  VehicleVerification: undefined;
-  Home: undefined;
-  // otras pantallas...
+  PageDriver: undefined;
 };
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -29,66 +31,75 @@ export default function Login() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const passwordRef = useRef<TextInput>(null);
 
   const handleLogin = () => {
-    // Redirige a la pantalla de verificación de vehículo
-    navigation.replace('VehicleVerification');
-    // "replace" es mejor que "navigate" porque evita que el usuario vuelva al login con el botón atrás
+    if (!email || !password) {
+      Alert.alert('Por favor, complete todos los campos');
+      return;
+    }
+    navigation.replace('PageDriver');
   };
-
+  
   return (
     <>
       <StatusBar barStyle="light-content" />
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea}>
-          <GoBack />
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+                <GoBack />
 
-          <View style={styles.skyline}>
-            <View style={styles.building1} />
-            <View style={styles.building2} />
-            <View style={styles.building3} />
-          </View>
+                <View style={styles.skyline}>
+                  <View style={styles.building1} />
+                  <View style={styles.building2} />
+                  <View style={styles.building3} />
+                </View>
 
-          <View style={styles.logoContainer}>
-            <View style={styles.logoWrapper}>
-              <Image
-                source={require('../../assets/logo-s.png')}
-                style={styles.logo}
-              />
-            </View>
-          </View>
+                <View style={styles.logoContainer}>
+                  <ResponsiveLogo source={require('../../assets/logo-s.png')} />
+                </View>
 
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Iniciar Sesión</Text>
-            <View style={styles.titleBar} />
+                <View style={styles.card}>
+                  <Text style={styles.cardTitle}>Iniciar Sesión</Text>
+                  <View style={styles.titleBar} />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              placeholderTextColor="#999"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Email"
+                    placeholderTextColor="#999"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    returnKeyType="next"
+                    blurOnSubmit={false}
+                    onSubmitEditing={() => passwordRef.current?.focus()}
+                  />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Contraseña"
-              placeholderTextColor="#999"
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
+                  <TextInput
+                    ref={passwordRef}
+                    style={styles.input}
+                    placeholder="Contraseña"
+                    placeholderTextColor="#999"
+                    secureTextEntry
+                    value={password}
+                    onChangeText={setPassword}
+                    returnKeyType="done"
+                  />
 
-            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-              <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
-            </TouchableOpacity>
-          </View>
+                  <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+                    <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
+                  </TouchableOpacity>
+                </View>
 
-          <Text style={styles.terms}>
-            Al hacer clic en iniciar, acepta nuestros Términos y condiciones
-          </Text>
+                <Text style={styles.terms}>
+                  Al hacer clic en iniciar, acepta nuestros Términos y condiciones
+                </Text>
+              </ScrollView>
+            </TouchableWithoutFeedback>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </View>
     </>
@@ -110,6 +121,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#6A11CB',
+    
   },
   safeArea: {
     flex: 1,
@@ -138,9 +150,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#6A11CB',
   },
   logoContainer: {
-    marginBottom: 20,
     alignSelf: 'center',
-    marginTop: -50,
   },
   logoWrapper: {
     shadowColor: '#110c0cff',

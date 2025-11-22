@@ -1,59 +1,92 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// components/Map/SchoolMap.tsx
 import React from 'react';
-import { StyleSheet, View, Platform } from 'react-native';
+import { StyleSheet, View, Platform, Alert, PermissionsAndroid } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-// Add env read (optional, helpful to detect missing key at runtime)
-import Config from 'react-native-config';
+import Geolocation from '@react-native-community/geolocation';
 
-interface SchoolMapProps {
-  markers?: Array<{
-    id: number;
-    title: string;
-    coordinate: { latitude: number; longitude: number };
-  }>;
-  initialRegion?: {
-    latitude: number;
-    longitude: number;
-    latitudeDelta: number;
-    longitudeDelta: number;
-  };
-}
 
-const SchoolMap: React.FC<SchoolMapProps> = ({
-  markers = [],
-  initialRegion = {
+type MarkerItem = {
+  id: number;
+  title?: string;
+  coordinate: { latitude: number; longitude: number };
+};
+
+type Region = {
+  latitude: number;
+  longitude: number;
+  latitudeDelta: number;
+  longitudeDelta: number;
+};
+
+type Props = {
+  markers?: MarkerItem[];
+  initialRegion?: Region;
+};
+
+export default function SchoolMap({ markers = [], initialRegion }: Props) {
+  const fallback: Region = {
     latitude: -34.6037,
     longitude: -58.3816,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
-  },
-}) => {
-  const googleMapsApiKey = Config.GOOGLE_MAPS_API_KEY;
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
+  };
+  const [region, setRegion] = React.useState<Region>(initialRegion ?? fallback);
+
+  React.useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        if (Platform.OS === 'android') {
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+            {
+              title: 'Location Permission',
+              message: 'App needs access to your location',
+              buttonNeutral: 'Ask Me Later',
+              buttonNegative: 'Cancel',
+              buttonPositive: 'OK',
+            },
+          );
+          if (granted !== PermissionsAndroid.RESULTS.GRANTED) return;
+        }
+        Geolocation.getCurrentPosition(
+          (position) => {
+            const next: Region = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            };
+            if (mounted) setRegion(next);
+          },
+          (_error) => {
+            Alert.alert('Ubicación', 'No se pudo obtener la ubicación actual');
+          },
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+        );
+      } catch {
+        Alert.alert('Ubicación', 'No se pudo obtener la ubicación actual');
+      }
+    })();
+    return () => { mounted = false };
+  }, []);
 
   return (
     <View style={styles.container}>
       <MapView
         style={styles.map}
-        initialRegion={initialRegion}
-        // Ensure Google provider on Android
+        region={region}
         provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
         showsUserLocation
-        followsUserLocation
         showsMyLocationButton
       >
-        {markers.map(marker => (
-          <Marker
-            key={marker.id}
-            coordinate={marker.coordinate}
-            title={marker.title}
-            pinColor="blue"
-          />
+        {markers.map(m => (
+          <Marker key={m.id} coordinate={m.coordinate} title={m.title} />
         ))}
+        <Marker coordinate={region} />
       </MapView>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -63,5 +96,3 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
   },
 });
-
-export default SchoolMap;

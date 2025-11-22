@@ -8,7 +8,7 @@ import LoginFather from '../screens/Login/LoginFather';
 import LoginDriver from '../screens/Login/LoginDriver';
 import PageDriver from '../screens/pages/PageDriver';
 import PageFather from '../screens/pages/PageFather';
-import VehicleVerificationScreen from '../screens/VehicleVerification'; //
+import VehicleVerificationScreen from '../components/deprecaded/VehicleVerification'; //
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
