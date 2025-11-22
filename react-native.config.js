@@ -6,5 +6,6 @@ module.exports = {
     ios: {
       sourceDir: './EjeSchool/ios',
     },
+    
   },
 };

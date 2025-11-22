@@ -1,4 +1,14 @@
 {
-  "name": "EjeSchool",
-  "displayName": "EjeSchool"
+  "expo": {
+    "name": "EjeSchool",
+    "displayName": "EjeSchool",
+    "android": {
+      "permissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ],
+      "useNextNotificationsApi": true
+    },
+    "plugins": []
+  }
 }
