@@ -7,22 +7,29 @@ export function GoBack() {
   const { to } = useNavigationUtils();
 
   return (
-    <TouchableOpacity style={styles.button} onPress={() => to('Home')}>
-      <Text style={styles.text}>← Volver</Text>
+    <TouchableOpacity activeOpacity={0.8} style={styles.button} onPress={() => to('InitialLogins')}>
+      <Text style={styles.text}>{'<'}</Text>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
-    padding: 10,
+    position: 'absolute',
+    zIndex: 1000,
+    top: 20,
+    left: 20,
+    backgroundColor: '#fff',
+    width: 40,
+    height: 38,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: '100%',
   },
   text: {
-    fontSize: 18,
-    color: '#000',
+    fontWeight: '500',
+    lineHeight: 38,
+    fontSize: 30,
+    color: '#c4c4c4',
   },
 });
-export type RootStackParamList = {
-  Home: undefined;
-  Login: undefined;
-};

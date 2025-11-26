@@ -90,6 +90,7 @@ const AddStudentButton: React.FC<AddStudentButtonProps> = ({
 
 const EjeSchoolComponent: React.FC = () => {
   const handleAddStudent = () => {
+    
     console.log('Abrir modal/pantalla para agregar estudiante.');
   };
 

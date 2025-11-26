@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import useResponsive from '../../types/useResponsive';
+import useResponsive from '../../../types/useResponsive';
 
 type Props = { children?: React.ReactNode; collapsed?: boolean; onToggle?: () => void };
 
@@ -30,11 +30,13 @@ export default function BottomBar({ children, collapsed = false }: Props) {
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: '#fff',
+    paddingTop: 20,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    elevation: 8,
+    elevation: 50,
+    zIndex: 1000,
     overflow: 'hidden',
-    position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,

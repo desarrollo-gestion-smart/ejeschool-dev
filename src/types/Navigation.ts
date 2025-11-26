@@ -1,8 +1,8 @@
 export type RootStackParamList = {
-  Home: undefined;
+  InitialLogins: undefined;
   LoginFather: undefined;
   LoginDriver: undefined;
-  VehicleVerification: undefined;
+  RegisterStudent: undefined;
   PageDriver: undefined;
   PageFather: undefined;
 };

@@ -17,27 +17,42 @@ import ResponsiveLogo from '../../components/ResponsiveLogo';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RootStackParamList } from '../../types/navigation';
+
 import { GoBack } from '../../components/Button/GoBack';
+import { login } from '../../api/auth';
+
+type RootStackParamList = {
+  RegisterStudent: undefined;
+  PageFather: undefined;
+};
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function Login() {
+  const navigation = useNavigation<LoginScreenNavigationProp>();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const navigation = useNavigation<LoginScreenNavigationProp>();
   const passwordRef = useRef<TextInput>(null);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Por favor, complete todos los campos');
       return;
-    } 
-    console.log('Login with', email, password);
-
-    navigation.replace('PageFather');
+    }
+    try {
+      const res = await login({ email, password, role: 'parent' });
+      const role = res.user.role;
+      if (role === 'parent' || role === 'admin') {
+        navigation.replace('PageFather');
+      } else {
+        Alert.alert('Acceso denegado', 'Tu rol no tiene acceso a esta pantalla');
+      }
+    } catch (e: any) {
+      Alert.alert('Login fallido', e?.response?.data?.message || 'Error de autenticación');
+    }
   };
-
+  
   return (
     <>
       <StatusBar barStyle="light-content" />
@@ -46,51 +61,54 @@ export default function Login() {
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
               <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-                <GoBack />
 
+                <GoBack />
                 <View style={styles.skyline}>
                   <View style={styles.building1} />
                   <View style={styles.building2} />
                   <View style={styles.building3} />
                 </View>
 
-                <View style={styles.logoContainer}>
-                  <ResponsiveLogo source={require('../../assets/logo-s.png')} />
-                </View>
+                <View style={styles.contentUp}>
+                  <ResponsiveLogo  source={require('../../assets/logo-s.png')} />
 
-                <View style={styles.card}>
-                  <Text style={styles.cardTitle}>Iniciar Sesión</Text>
-                  <View style={styles.titleBar} />
+                  <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Iniciar Sesión</Text>
+                    <View style={styles.titleBar} />
 
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Email"
-                    placeholderTextColor="#999"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    returnKeyType="next"
-                    blurOnSubmit={false}
-                    onSubmitEditing={() => passwordRef.current?.focus()}
-                  />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Email"
+                      placeholderTextColor="#999"
+                      value={email}
+                      onChangeText={setEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      returnKeyType="next"
+                      blurOnSubmit={false}
+                      onSubmitEditing={() => passwordRef.current?.focus()}
+                    />
 
-                  <TextInput
-                    ref={passwordRef}
-                    style={styles.input}
-                    placeholder="Contraseña"
-                    placeholderTextColor="#999"
-                    secureTextEntry
-                    value={password}
-                    onChangeText={setPassword}
-                    returnKeyType="done"
-                  />
+                    <TextInput
+                      ref={passwordRef}
+                      style={styles.input}
+                      placeholder="Contraseña"
+                      placeholderTextColor="#999"
+                      secureTextEntry
+                      value={password}
+                      onChangeText={setPassword}
+                      returnKeyType="done"
+                    />
 
-                  <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-                    <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
+                    <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+                      <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <TouchableOpacity style={styles.registerButton} onPress={() => navigation.navigate('RegisterStudent')}>
+                    <Text style={styles.registerButtonText}>Registrarse</Text>
                   </TouchableOpacity>
                 </View>
-
                 <Text style={styles.terms}>
                   Al hacer clic en iniciar, acepta nuestros Términos y condiciones
                 </Text>
@@ -117,7 +135,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#6A11CB',
+    backgroundColor: '#5d01bc',
   },
   safeArea: {
     flex: 1,
@@ -130,10 +148,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingBottom: 10,
   },
+  contentUp: {
+    marginTop: -24,
+  },
   building1: {
     width: 30,
     height: 60,
-    backgroundColor: '#6A11CB',
+    backgroundColor: '#5d01bc',
   },
   building2: {
     width: 40,
@@ -145,38 +166,20 @@ const styles = StyleSheet.create({
     height: 50,
     backgroundColor: '#6A11CB',
   },
-  logoContainer: {
-    marginBottom: 20,
-    alignSelf: 'center',
-    marginTop: -50,
-  },
-  logoWrapper: {
-    shadowColor: '#110c0cff',
-    width: 200,
-    height: 220,
-    shadowOffset: { width: 0, height: 5 },
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowOpacity: 0.3,
-    elevation: 10,
-    borderRadius: 80,
-  },
-  logo: {
-    width: '100%',
-    height: '100%',
-  },
+  
   card: {
     backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
-    marginHorizontal: 20,
+    borderRadius: 10,
+    padding: 16,
+    alignSelf: 'center',
+    width: '88%',
+    maxWidth: 360,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
-    top: 50,
   },
   cardTitle: {
     fontSize: 24,
@@ -201,7 +204,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   loginButton: {
-    backgroundColor: '#6A11CB',
+    backgroundColor: '#5d01bc',
     paddingVertical: 15,
     paddingHorizontal: 40,
     borderRadius: 10,
@@ -215,13 +218,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   registerButton: {
-    backgroundColor: '#626262',
+    alignSelf: 'center',
+    backgroundColor: '#2672ca',
     paddingVertical: 15,
-    paddingHorizontal: 40,
     borderRadius: 10,
-    width: '100%',
+    width: '88%',
+    maxWidth: 360,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 16,
   },
   registerButtonText: {
     color: 'white',
@@ -229,11 +233,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   terms: {
-    top: 100,
+    top: 10,
     color: 'white',
     fontSize: 12,
     textAlign: 'center',
-    marginTop: 20,
     marginHorizontal: 20,
   },
 });

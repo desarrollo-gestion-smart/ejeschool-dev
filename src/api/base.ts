@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
 
 const BASE_URL = ''; 
@@ -12,27 +12,92 @@ const api: AxiosInstance = axios.create({
 });
 
 
+type MockUser = { id: string; name: string; email: string; role: 'admin' | 'parent' | 'driver'; password: string };
+const mockUsers: MockUser[] = [
+  { id: '1', name: 'Admin', email: 'admin', role: 'admin', password: '123' },
+  
+];
+
+let currentToken: string | null = null;
+
+api.defaults.adapter = async (config) => {
+  const method = (config.method || 'get').toLowerCase();
+  const url = config.url || '';
+  const body = typeof config.data === 'string' ? JSON.parse(config.data || '{}') : (config.data || {});
+
+  const makeResponse = (data: any, status = 200): AxiosResponse => ({
+    data,
+    status,
+    statusText: status === 200 ? 'OK' : 'ERROR',
+    headers: {},
+    config,
+  });
+
+  if (BASE_URL === '') {
+    if (method === 'post' && url === '/auth/login') {
+      const { email, password, role } = body || {};
+      const user = mockUsers.find(u => u.email === email);
+      if (!user) {
+        return makeResponse({ message: 'Usuario no existe' }, 401);
+      }
+      if (user.password !== password) {
+        return makeResponse({ message: 'Credenciales inválidas' }, 401);
+      }
+      if (user.role !== role && user.role !== 'admin') {
+        return makeResponse({ message: 'Rol no autorizado' }, 403);
+      }
+      currentToken = `mock-token-${user.id}`;
+      return makeResponse({ token: currentToken, user: { id: user.id, name: user.name, role: user.role } });
+    }
+
+    if (method === 'post' && url === '/auth/register') {
+      const { name, email, password, role = 'parent' } = body || {};
+      const exists = mockUsers.some(u => u.email === email);
+      if (exists) {
+        return makeResponse({ message: 'Usuario ya existe' }, 409);
+      }
+      const id = String(mockUsers.length + 1);
+      const newUser: MockUser = { id, name: name || email, email, password, role: role as any };
+      mockUsers.push(newUser);
+      currentToken = `mock-token-${id}`;
+      return makeResponse({ token: currentToken, user: { id, name: newUser.name, email, role } });
+    }
+
+    if (method === 'post' && url === '/auth/logout') {
+      currentToken = null;
+      return makeResponse({ ok: true });
+    }
+
+    if (method === 'get' && url.startsWith('/users/')) {
+      const id = url.split('/').pop() as string;
+      const user = mockUsers.find(u => u.id === id);
+      if (!user) return makeResponse({ message: 'Usuario no encontrado' }, 404);
+      return makeResponse({ id: user.id, name: user.name, email: user.email, role: user.role });
+    }
+
+    if (method === 'put' && url.startsWith('/users/')) {
+      const id = url.split('/').pop() as string;
+      const idx = mockUsers.findIndex(u => u.id === id);
+      if (idx === -1) return makeResponse({ message: 'Usuario no encontrado' }, 404);
+      const updated = { ...mockUsers[idx], ...body } as MockUser;
+      mockUsers[idx] = updated;
+      return makeResponse({ id: updated.id, name: updated.name, email: updated.email, role: updated.role });
+    }
+
+    return makeResponse({ message: 'Ruta no disponible en mock' }, 404);
+  }
+
+  throw new Error('Adapter sin implementación para BASE_URL real');
+};
+
 api.interceptors.request.use(
   (config) => {
-    
-    const token = 'your-auth-token';
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (currentToken) {
+      config.headers.Authorization = `Bearer ${currentToken}`;
     }
     return config;
   },
   (error) => Promise.reject(error)
-);
-
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      
-    }
-    return Promise.reject(error);
-  }
 );
 
 export default api;

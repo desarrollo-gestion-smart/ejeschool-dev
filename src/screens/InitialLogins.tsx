@@ -6,9 +6,9 @@ import ButtonText from '../components/Button/ButtonText';
 import { RootStackParamList } from '../types/navigation';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'InitialLogins'>;
 
-export default function Home({ navigation }: Props) {
+export default function InitialLogins({ navigation }: Props) {
   const { width, height } = useWindowDimensions();
   const contentTop = height < 640 ? -50 : -100;
   const titleSize = Math.min(32, Math.max(24, width * 0.08));

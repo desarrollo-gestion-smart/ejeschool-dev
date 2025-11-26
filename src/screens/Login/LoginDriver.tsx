@@ -19,6 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { GoBack } from '../../components/Button/GoBack';
+import { login } from '../../api/auth';
 
 type RootStackParamList = {
   PageDriver: undefined;
@@ -33,12 +34,22 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const passwordRef = useRef<TextInput>(null);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Por favor, complete todos los campos');
       return;
     }
-    navigation.replace('PageDriver');
+    try {
+      const res = await login({ email, password, role: 'driver' });
+      const role = res.user.role;
+      if (role === 'driver' || role === 'admin') {
+        navigation.replace('PageDriver');
+      } else {
+        Alert.alert('Acceso denegado', 'Tu rol no tiene acceso a esta pantalla');
+      }
+    } catch (e: any) {
+      Alert.alert('Login fallido', e?.response?.data?.message || 'Error de autenticación');
+    }
   };
   
   return (
@@ -49,17 +60,16 @@ export default function Login() {
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
               <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-                <GoBack />
 
+                <GoBack />
                 <View style={styles.skyline}>
                   <View style={styles.building1} />
                   <View style={styles.building2} />
                   <View style={styles.building3} />
                 </View>
-
-                <View style={styles.logoContainer}>
-                  <ResponsiveLogo source={require('../../assets/logo-s.png')} />
-                </View>
+               
+               <View style={styles.contentUp}>
+                  <ResponsiveLogo  source={require('../../assets/logo-s.png')} />
 
                 <View style={styles.card}>
                   <Text style={styles.cardTitle}>Iniciar Sesión</Text>
@@ -74,7 +84,6 @@ export default function Login() {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     returnKeyType="next"
-                    blurOnSubmit={false}
                     onSubmitEditing={() => passwordRef.current?.focus()}
                   />
 
@@ -92,6 +101,7 @@ export default function Login() {
                   <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
                     <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
                   </TouchableOpacity>
+                </View>
                 </View>
 
                 <Text style={styles.terms}>
@@ -120,8 +130,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#6A11CB',
-    
+    backgroundColor: '#5d01bc',
   },
   safeArea: {
     flex: 1,
@@ -134,10 +143,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingBottom: 10,
   },
+  contentUp: {
+    marginTop: -24,
+  },
   building1: {
     width: 30,
     height: 60,
-    backgroundColor: '#6A11CB',
+    backgroundColor: '#5d01bc',
   },
   building2: {
     width: 40,
@@ -149,36 +161,20 @@ const styles = StyleSheet.create({
     height: 50,
     backgroundColor: '#6A11CB',
   },
-  logoContainer: {
-    alignSelf: 'center',
-  },
-  logoWrapper: {
-    shadowColor: '#110c0cff',
-    width: 200,
-    height: 220,
-    shadowOffset: { width: 0, height: 5 },
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowOpacity: 0.3,
-    elevation: 10,
-    borderRadius: 80,
-  },
-  logo: {
-    width: '100%',
-    height: '100%',
-  },
+  
   card: {
     backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
-    marginHorizontal: 20,
+    borderRadius: 10,
+    padding: 16,
+    alignSelf: 'center',
+    width: '88%',
+    maxWidth: 360,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
-    top: 50,
   },
   cardTitle: {
     fontSize: 24,
@@ -203,7 +199,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   loginButton: {
-    backgroundColor: '#6A11CB',
+    backgroundColor: '#5d01bc',
     paddingVertical: 15,
     paddingHorizontal: 40,
     borderRadius: 10,
@@ -216,26 +212,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  registerButton: {
-    backgroundColor: '#626262',
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 10,
-    width: '100%',
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  registerButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
   terms: {
-    top: 100,
+    top: 10,
     color: 'white',
     fontSize: 12,
     textAlign: 'center',
-    marginTop: 20,
     marginHorizontal: 20,
   },
 });

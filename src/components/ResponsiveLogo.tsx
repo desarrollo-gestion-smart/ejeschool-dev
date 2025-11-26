@@ -13,8 +13,8 @@ type Props = {
 export default function ResponsiveLogo({
   source,
   sizePercent = 0.5,
-  maxWidth = 200,
-  maxHeight = 220,
+  maxWidth = 150,
+  maxHeight = 140,
   borderRadiusFactor = 0.4,
   containerStyle,
 }: Props) {
@@ -29,21 +29,22 @@ export default function ResponsiveLogo({
   );
 
   return (
-    <View style={[styles.logoWrapper, dynamic.wrapper, containerStyle] }>
-      <Image source={source} style={styles.logo} />
+    <View style={[styles.logoContainer, containerStyle]}>
+      <Image source={source} style={[styles.logo, dynamic.wrapper]} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  logoWrapper: {
+   logoContainer: {
     shadowColor: '#110c0cff',
-    shadowOffset: { width: 0, height: 5 },
+    shadowOffset: { width: 0, height: 10 },
     justifyContent: 'center',
-    alignItems: 'center',
+    alignSelf: 'center',
     shadowOpacity: 0.3,
     elevation: 10,
     borderRadius: 80,
+    marginBottom: 20,
   },
-  logo: { width: '100%', height: '100%' },
+  logo: { width: 3, height: 3 },
 });

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import useResponsive from '../../types/useResponsive';
+import useResponsive from '../../../types/useResponsive';
 
 type Props = {
   title?: string;
