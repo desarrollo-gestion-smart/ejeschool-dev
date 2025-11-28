@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import useResponsive from '../../../types/useResponsive';
 
 type Props = {
   title?: string;
@@ -9,19 +8,18 @@ type Props = {
   left?: React.ReactNode;
 };
 
-export default function TopBar({ title, right, left }: Props) {
+
+export default function TopBar({ title }: Props) {
   const insets = useSafeAreaInsets();
-  const { headerHeight } = useResponsive();
   return (
     <View
       style={[
         styles.container,
-        { paddingTop: insets.top, height: headerHeight + insets.top },
+        { paddingTop: insets.top, height: 120 + insets.top },
       ]}
     >
-      <View style={styles.side}>{left}</View>
       <Text style={styles.title}>{title || ''}</Text>
-      <View style={styles.side}>{right}</View>
+      
     </View>
   );
 }
@@ -34,12 +32,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 10,
-    backgroundColor: '#6D28D9',
+    backgroundColor: '#5702acff',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     paddingHorizontal: 16,
   },
-  title: { color: '#fff', fontSize: 18, fontWeight: '600' },
-  side: { width: 48, alignItems: 'center', justifyContent: 'center' },
+  title: { color: '#FFFFFF', fontSize: 22, fontWeight: '700' },
 });

@@ -5,4 +5,6 @@ export type RootStackParamList = {
   RegisterStudent: undefined;
   PageDriver: undefined;
   PageFather: undefined;
+  DashboardFather: undefined;
+  ChatSupport: undefined;
 };

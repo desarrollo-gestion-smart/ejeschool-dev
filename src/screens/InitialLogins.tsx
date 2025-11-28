@@ -5,25 +5,23 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import ButtonText from '../components/Button/ButtonText';
 import { RootStackParamList } from '../types/navigation';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-
+import LogoSvg from '../assets/logo-s.svg';
 type Props = NativeStackScreenProps<RootStackParamList, 'InitialLogins'>;
 
 export default function InitialLogins({ navigation }: Props) {
   const { width, height } = useWindowDimensions();
   const contentTop = height < 640 ? -50 : -100;
-  const titleSize = Math.min(32, Math.max(24, width * 0.08));
-  const welcomeSize = Math.min(24, Math.max(18, width * 0.06));
+  const titleSize = Math.min(42, Math.max(100, width * 0.08));
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="light-content" />
       <SafeAreaView style={styles.container}>
         <View style={[styles.content, { top: contentTop }] }>
-          <View style={styles.logoContainer}>
-            <ResponsiveLogo source={require('../assets/logo-s.png')} sizePercent={0.5} maxWidth={200} maxHeight={220} />
-          </View>
+          
+            <ResponsiveLogo source={LogoSvg} sizePercent={0.5} maxWidth={100} maxHeight={100} />
+          
 
           <Text style={[styles.title, { fontSize: titleSize }]}>EjeSchool</Text>
-          <Text style={[styles.welcome, { fontSize: welcomeSize }]}>Bienvenido</Text>
 
           <ButtonText
             label="Iniciar Sesión Como Padres"
@@ -44,13 +42,14 @@ export default function InitialLogins({ navigation }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1,
-    justifyContent: 'center',
-    backgroundColor: '#6D28D9' },
+    display: 'flex',
+    justifyContent: 'flex-start',
+    backgroundColor: '#5d01bc' },
 
   content: {
     flex: 1,
-    marginTop: '30%',
-    justifyContent: 'center',
+    marginTop: '50%',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     paddingHorizontal: 10,
   },
@@ -58,7 +57,7 @@ const styles = StyleSheet.create({
   customButton: {
     backgroundColor: '#fff',
     marginTop: 30,
-    height: 50,
+    height: 45,
     width: '80%',
     alignSelf: 'center',
     justifyContent: 'center',
@@ -68,34 +67,18 @@ const styles = StyleSheet.create({
   customButtonSecond: {
     backgroundColor: '#2196F3',
     marginTop: 30,
-    height: 50,
+    height: 45,
     width: '80%',
     alignSelf: 'center',
     justifyContent: 'center',
     borderRadius: 10,
   },
 
-  logoContainer: { marginBottom: 20, alignItems: 'center' },
-
-  logoWrapper: {
-    shadowColor: '#110c0cff',
-    shadowOffset: { width: 0, height: 5 },
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowOpacity: 0.3,
-    elevation: 10,
-    borderRadius: 80,
-  },
-
   title: {
-    fontFamily: 'arial',
+    fontFamily: 'aber',
     fontSize: 32,
     color: 'white',
     marginBottom: 20,
   },
 
-  welcome: {
-    fontSize: 24,
-    color: 'white',
-  },
 });

@@ -72,12 +72,6 @@ export default function RegisterStudent() {
                 contentContainerStyle={styles.content}
                 keyboardShouldPersistTaps="handled"
               >
-                <View style={styles.skyline}>
-                  <View style={styles.building1} />
-                  <View style={styles.building2} />
-                  <View style={styles.building3} />
-                </View>
-
                 <View style={styles.card}>
                   <Text style={styles.cardTitle}>Registrar</Text>
                   <View style={styles.titleBar} />
@@ -162,9 +156,15 @@ export default function RegisterStudent() {
                   >
                     <Text style={styles.loginButtonText}> Registrar </Text>
                   </TouchableOpacity>
-                  <SinginWithaGoogle />
 
                 </View>
+                 <TouchableOpacity
+                    style={styles.registerButton}
+                    onPress={register}
+                  >
+                  <SinginWithaGoogle />
+                  </TouchableOpacity>
+
                     <Text style={styles.terms}>
                   Al hacer clic en iniciar, acepta nuestros Términos y
                   condiciones
@@ -180,50 +180,28 @@ export default function RegisterStudent() {
 
 const styles = StyleSheet.create({
   content: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingVertical: 16,
+    flex: 1,
+    justifyContent: 'flex-start',
   },
   container: {
+    padding: 20,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
     flex: 1,
-    backgroundColor: '#6A11CB',
+    backgroundColor: '#5d01bc',
   },
   safeArea: {
     flex: 1,
-    backgroundColor: '#6A11CB',
+    backgroundColor: '#5d01bc',
   },
-  skyline: {
-    width: '100%',
-    position: 'absolute',
-    height: 100,
-    backgroundColor: '#4C1D95',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'flex-end',
-    paddingBottom: 10,
-  },
-  building1: {
-    width: 30,
-    height: 60,
-    backgroundColor: '#6A11CB',
-  },
-  building2: {
-    width: 40,
-    height: 80,
-    backgroundColor: '#6A11CB',
-  },
-  building3: {
-    width: 25,
-    height: 50,
-    backgroundColor: '#6A11CB',
-  },
+ 
   card: {
     backgroundColor: 'white',
     borderRadius: 16,
-    padding: 16,
+    padding: 10,
     alignSelf: 'center',
     width: '88%',
-    maxWidth: 400,
+    maxWidth: 300,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -234,7 +212,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '900',
     color: '#333',
     marginBottom: 10,
   },
@@ -246,18 +224,15 @@ const styles = StyleSheet.create({
   },
   input: {
     width: '100%',
-    height: 45,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    marginBottom: 15,
+    height: 42,
+    paddingHorizontal: 16,
+    marginBottom: 16,
     fontSize: 16,
+    backgroundColor: '#fafafa',
   },
   loginButton: {
     backgroundColor: '#6A11CB',
-    paddingVertical: 15,
-    paddingHorizontal: 40,
+    paddingVertical: 8,
     borderRadius: 10,
     width: '100%',
     alignItems: 'center',
@@ -268,6 +243,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  registerButton: {
+    
+    position: 'relative',
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  
  
   terms: {
     color: 'white',

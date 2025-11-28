@@ -7,11 +7,30 @@ import {
   TouchableOpacity,
   FlatList,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native'; 
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import routesData from '../../../components/FooterRoutes/routesData';
 
-const STUDENT_DATA_LIST = [
-  { id: '1', name: 'Johnny Rios', uri: 'https://i.pravatar.cc/150?img=68' },
-  { id: '2', name: 'Mark Holmes', uri: 'https://i.pravatar.cc/150?img=50' },
-];
+
+type RootStackParamList = {
+  DashboardFather: { studentName: string; avatarUri?: string };
+};
+
+type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>; 
+
+const STUDENT_DATA_LIST = (() => {
+  const names: string[] = [];
+  routesData.forEach(r => {
+    (r.stops || []).forEach(s => {
+      if (s.student && !names.includes(s.student)) names.push(s.student);
+    });
+  });
+  return names.map((name, idx) => ({
+    id: String(idx + 1),
+    name,
+    uri: `https://i.pravatar.cc/150?img=${(idx % 70) + 1}`,
+  }));
+})();
 
 interface StudentCardProps {
   name: string;
@@ -24,24 +43,30 @@ const StudentCard: React.FC<StudentCardProps> = ({
   imageUri,
   onPress,
 }) => {
+  const navigation = useNavigation<LoginScreenNavigationProp>();
+
+  const passMapStudent = React.useCallback(() => {
+    navigation.replace('DashboardFather', { studentName: name, avatarUri: imageUri });
+  }, [navigation, name, imageUri]);
+  
   return (
     <TouchableOpacity style={styles.studentCard} onPress={onPress}>
       <View style={styles.studentInfo}>
         <Image source={{ uri: imageUri }} style={styles.studentImage} />
         <Text style={styles.studentNameText}>{name}</Text>
       </View>
-
-      <View style={styles.actionButtonContainer}>
+      <TouchableOpacity onPress={passMapStudent} style={styles.actionButtonContainer}>
         <Text style={styles.actionButtonText}>
           {'>'}
         </Text>
-      </View>
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 };
 
 const StudentListSection: React.FC = () => {
   const handleStudentPress = React.useCallback((name: string) => {
+
     console.log(`Abriendo detalles de ${name}`);
   }, []);
 
@@ -114,7 +139,7 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    backgroundColor: '#6A0DAD',
+    backgroundColor: '#5d01bc',
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 20,

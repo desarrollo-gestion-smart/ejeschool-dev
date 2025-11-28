@@ -1,5 +1,5 @@
 import { Alert } from 'react-native';
-import { TouchableOpacity, Text, Image, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import React, { useState } from 'react';
 
 
@@ -24,10 +24,10 @@ export const SinginWithaGoogle = () => {;
                     onPress={handleGoogleSignIn}    
                     disabled={cargandoGoogle}                
                   >
-                    <Text>
+                    {/* <Text>
                       
                       <Image source={{uri: 'https://img.icons8.com/color/48/000000/google-logo.png'}} style={styles.googleIcon} />
-                    </Text>
+                    </Text> */}
                     <Text style={styles.registerButtonText}>
                       {cargandoGoogle ? 'Conectando...' : 'Registrar con Google'}
                     </Text>
@@ -39,23 +39,21 @@ const styles = StyleSheet.create({
    googleIcon: {
     width: 24,
     height: 24,
-    marginRight: 12,
   },
   registerButton: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#2672cb',
     alignSelf: 'center',
-    width: '88%',
-    maxWidth: 400,
-    height: 45,
+    width: '90%',
+    height: 40,
     borderRadius: 10,
-    marginTop: 12,
+    paddingHorizontal: 16,
   },
   registerButtonText: {
-    color: 'black',
-    fontSize: 20,
+    color: '#fff',
+    fontSize: 18,
     fontWeight: 'bold',
 
   },

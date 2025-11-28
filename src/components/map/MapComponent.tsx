@@ -1,472 +1,350 @@
 import React from 'react';
-import {
-  StyleSheet,
-  View,
-  Platform,
-  Alert,
-  PermissionsAndroid,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import Geolocation from '@react-native-community/geolocation';
-import Config from 'react-native-config';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import MapView, { Marker, Region, PROVIDER_GOOGLE } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
-import BottomBar from './layout/BottomBar';
+import Config from 'react-native-config';
+import AppLayout from './layout/AppLayout';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MarkerOrigin from '../../assets/marker-origin.svg';
-import MarkerDestination from '../../assets/marker-destination.svg';
-import useResponsive from '../../types/useResponsive';
+// import MarkerDestination from '../../assets/marker-destination.svg';
+import type { Coordinate } from '../FooterRoutes/routesData';
 
-// --- TIPOS ---
-
-export type Coordinate = { latitude: number; longitude: number };
 
 type MarkerItem = {
-  id: number;
-  title: string;
-  coordinate: Coordinate;
-  type: 'origin' | 'destination' | 'waypoint';
-};
-
-type Region = {
-  latitude: number;
-  longitude: number;
-  latitudeDelta: number;
-  longitudeDelta: number;
+  id: number;
+  title: string;
+  coordinate: Coordinate;
+  type: 'origin' | 'destination' | 'waypoint';
 };
 
 type Props = {
-  markers?: MarkerItem[];
-  initialRegion?: Region;
-  bottomContent?: (args: {
-    collapsed: boolean;
-    toggle: () => void;
-    onRouteSelect: (stops: Coordinate[]) => void;
-  }) => React.ReactNode;
-  googleApiKey?: string;
-  origin?: Coordinate;
-  destination?: Coordinate;
-  waypoints?: Coordinate[];
+  markers?: MarkerItem[];
+  initialRegion?: Region;
+  bottomContent?: (args: {
+    collapsed: boolean;
+    toggle: () => void;
+    onRouteSelect: (stops: Coordinate[]) => void;
+    onModeChange: (isDetails: boolean) => void;
+  }) => React.ReactNode;
+  renderTopBar?: React.ReactNode;
+  origin?: Coordinate;
+  destination?: Coordinate;
+  waypoints?: Coordinate[];
 };
 
-// --- COMPONENTE ---
+const getMapsApiKey = (): string => {
+  return (Config as any)?.GOOGLE_MAPS_API_KEY || (Config as any)?.Maps_API_KEY || '';
+};
+// Esta función simulará la obtención de la dirección real a partir de las coordenadas
+const getAddressFromCoordinates = async (latitude: number, longitude: number): Promise<string> => {
+    const apiKey = getMapsApiKey();
+    if (!apiKey) {
+        console.warn("GOOGLE_MAPS_API_KEY is missing. Cannot perform geocoding.");
+        return `Lat: ${latitude.toFixed(5)}, Lon: ${longitude.toFixed(5)}`;
+    }
+
+    try {
+        const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`);
+        const data = await response.json();
+        
+        if (data.status === 'OK' && data.results.length > 0) {
+            // Devuelve la dirección formateada
+            return data.results[0].formatted_address;
+        } else {
+            // Manejo de errores de la API o sin resultados
+            return 'Dirección no encontrada';
+        }
+    } catch (error) {
+        console.error("Geocoding failed:", error);
+        return 'Error de servicio de geocodificación';
+    }
+};
+// -----------------------------------------------------------------------------
+
 
 export default function MapComponent({
-  markers = [],
-  initialRegion,
-  bottomContent,
-  googleApiKey,
-  origin,
-  destination,
-  waypoints,
+  markers = [],
+  initialRegion,
+  bottomContent,
+  renderTopBar,
+  origin,
+  destination,
+  waypoints,
 }: Props) {
-  const mapRef = React.useRef<MapView>(null);
-  const watchIdRef = React.useRef<number | null>(null);
-  const {} = useResponsive();
-  const [activeRoute, setActiveRoute] = React.useState<{
-    origin?: Coordinate;
-    destination?: Coordinate;
-    waypoints?: Coordinate[];
-  }>({});
-  const [routeStopMarkers, setRouteStopMarkers] = React.useState<MarkerItem[]>(
-    [],
-  );
-  const [collapsed, setCollapsed] = React.useState(true);
-  const waypointColors = [
-    '#6D28D9',
-    '#4ECDC4',
-    '#FFE66D',
-    '#95E1D3',
-    '#FF6B6B',
-    '#7B7B7B',
-  ];
-  const fallback: Region = {
-    latitude: -34.6037,
-    longitude: -58.3816,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
-  };
-  const [region, setRegion] = React.useState<Region>(initialRegion ?? fallback);
-  const [isFollowing, setIsFollowing] = React.useState(false);
+  const insets = useSafeAreaInsets();
+  const uberLightMapStyle = [
+    { elementType: 'geometry', stylers: [{ color: '#FAFAFA' }] },
+    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#F7F8FA' }] },
+    { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#FAFAFA' }] },
+    { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#F9FAFB' }] },
+    { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#FAFAFA' }] },
+    { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+    { featureType: 'poi.park', stylers: [{ visibility: 'off' }] },
+    { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#FFFFFF' }] },
+    { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#F7F7F7' }] },
+    { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#FFFFFF' }] },
+    { featureType: 'road.local', elementType: 'geometry', stylers: [{ color: '#FFFFFF' }] },
+    { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#EEEEEE' }] },
+    { featureType: 'road', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+    { featureType: 'road', elementType: 'labels.text.stroke', stylers: [{ visibility: 'off' }] },
+    { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#BDBDBD' }] },
+    { featureType: 'administrative', elementType: 'labels.text.fill', stylers: [{ color: '#B8B8B8' }] },
+    { featureType: 'administrative', elementType: 'geometry', stylers: [{ visibility: 'off' }] },
+  ];
+  const mapRef = React.useRef<MapView>(null);
+  const [activeRoute, setActiveRoute] = React.useState<{
+    origin?: Coordinate;
+    destination?: Coordinate;
+    waypoints?: Coordinate[];
+  }>({});
+  const [routeStopMarkers, setRouteStopMarkers] = React.useState<MarkerItem[]>([]);
+  const [routeCoords, setRouteCoords] = React.useState<Coordinate[]>([]);
+  const COLOR_BLUE = '#2563EB';
+  const COLOR_GREEN = '#10B981';
+  const COLOR_RED = '#EF4444';
+  const [isDetailsMode, setIsDetailsMode] = React.useState(false);
+  const [mapReady, setMapReady] = React.useState(false);
+  // no defaultStops: map does not auto-initialize from routesData
 
-  const ensureLocationPermission =
-    React.useCallback(async (): Promise<boolean> => {
-      if (Platform.OS !== 'android') return true;
-      const fine = await PermissionsAndroid.check(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      );
-      const coarse = await PermissionsAndroid.check(
-        PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
-      );
-      if (fine || coarse) return true;
-      const results = await PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
-      ]);
-      const granted =
-        results[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION] ===
-          PermissionsAndroid.RESULTS.GRANTED ||
-        results[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] ===
-          PermissionsAndroid.RESULTS.GRANTED;
-      const never =
-        results[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION] ===
-          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
-        results[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] ===
-          PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN;
-      if (never) {
-        Alert.alert(
-          'Ubicación',
-          'Permiso deshabilitado. Actívalo en Ajustes del sistema.',
-        );
-      }
-      return granted;
-    }, []);
+  const fallback: Region = {
+    latitude: -34.6037,
+    longitude: -58.3816,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.01,
+  };
+  const [region] = React.useState<Region>(initialRegion ?? fallback);
 
-  const centerMap = React.useCallback((newRegion: Region, animate = true) => {
-    setRegion(newRegion);
-    if (animate) {
-      mapRef.current?.animateToRegion(newRegion, 500);
-    }
-  }, []);
 
-  const centerMapOnCurrentLocation = React.useCallback(async () => {
-    const ok = await ensureLocationPermission();
-    if (!ok) return;
+  // Centra y ajusta el mapa para mostrar toda la ruta
+  const fitToRoute = React.useCallback(() => {
+    const allPoints = [
+      ...(activeRoute.origin ? [activeRoute.origin] : origin ? [origin] : []),
+      ...(activeRoute.waypoints || waypoints || []),
+      ...(activeRoute.destination ? [activeRoute.destination] : destination ? [destination] : []),
+    ].filter(Boolean) as Coordinate[];
 
-    Geolocation.getCurrentPosition(
-      position => {
-        const next: Region = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        };
-        centerMap(next);
-        setIsFollowing(true);
-      },
-      error => {
-        if ((error as any)?.code === 1) {
-          Alert.alert('Ubicación', 'Permiso de ubicación denegado');
-        }
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
-    );
-  }, [centerMap, ensureLocationPermission]);
+    if (allPoints.length < 1) return;
 
-  React.useEffect(() => {
-    let mounted = true;
+    if (allPoints.length === 1) {
+      mapRef.current?.animateToRegion({
+        latitude: allPoints[0].latitude,
+        longitude: allPoints[0].longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      }, 600);
+      return;
+    }
 
-    (async () => {
-      try {
-        const ok = await ensureLocationPermission();
-        if (!ok) {
-          if (mounted)
-            Alert.alert('Ubicación', 'Permiso de ubicación denegado.');
-          return;
-        }
-        Geolocation.getCurrentPosition(
-          position => {
-            const next: Region = {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-              latitudeDelta: 0.01,
-              longitudeDelta: 0.01,
-            };
-            if (mounted && initialRegion === undefined) {
-              setRegion(next);
-            }
-          },
-          _error => {
-            console.log('Error al obtener ubicación inicial');
-          },
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
-        );
-      } catch {
-        Alert.alert('Ubicación', 'No se pudo obtener la ubicación actual');
-      }
-    })();
+    mapRef.current?.fitToCoordinates(allPoints, {
+      edgePadding: { top: 200, right: 200, bottom: 100, left: 110 },
+      animated: true,
+    });
+  }, [activeRoute, origin, destination, waypoints]);
 
-    return () => {
-      mounted = false;
-    };
-  }, [ensureLocationPermission, initialRegion]);
 
-  React.useEffect(() => {
-    const stopWatch = () => {
-      if (watchIdRef.current !== null) {
-        Geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-        console.log('Parando el seguimiento (watchPosition)');
-      }
-    };
+  // Ajustar vista cuando cambia la ruta o sus coordenadas
+  React.useEffect(() => {
+    if (routeCoords.length > 1) {
+      setTimeout(() => fitToRoute(), 300);
+    }
+  }, [routeCoords, fitToRoute]);
 
-    if (isFollowing) {
-      (async () => {
-        const ok = await ensureLocationPermission();
-        if (!ok) {
-          setIsFollowing(false);
-
-          return;
-        }
-
-        const id = Geolocation.watchPosition(
-          position => {
-            if (isFollowing) {
-              const newRegion: Region = {
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-              };
-              centerMap(newRegion);
-            }
-          },
-          error => {
-            if ((error as any)?.code === 1) {
-              Alert.alert('Ubicación', 'Permiso de ubicación denegado');
-            }
-          },
-          {
-            enableHighAccuracy: true,
-            distanceFilter: 10,
-            interval: 2000,
-          },
-        );
-        watchIdRef.current = id;
-        console.log('Iniciando el seguimiento (watchPosition)');
-      })();
-    } else {
-      stopWatch();
-    }
-
-    return stopWatch;
-  }, [isFollowing, ensureLocationPermission, centerMap]);
-
-  const applyRouteStops = React.useCallback(
-    (stops: Coordinate[]) => {
-      if (!stops || stops.length < 2) {
-        setActiveRoute({});
-        setRouteStopMarkers([]);
-        setCollapsed(false);
-        return;
-      }
-      setCollapsed(false);
-      const originStop = stops[0];
-      const destinationStop = stops[stops.length - 1];
-      const wp = stops.slice(1, stops.length - 1);
-      setActiveRoute({
-        origin: originStop,
-        destination: destinationStop,
-        waypoints: wp,
+  // MODIFICACIÓN CLAVE: Implementación de Geocodificación Inversa
+  const applyRouteStops = React.useCallback(
+    async (stops: Coordinate[]) => {
+      const allStops = (stops || []).filter(Boolean);
+      // Incluir puntos con status aquí para asegurar que también se geocodifiquen
+      const routeStopsUniq = allStops.filter((s, idx, arr) => arr.findIndex(t => t.latitude === s.latitude && t.longitude === s.longitude) === idx);
+      
+      if (routeStopsUniq.length < 2) {
+        setActiveRoute({});
+        setRouteStopMarkers([]);
+        setRouteCoords([]);
+        return;
+      }
+      
+      // 1. Obtener y enriquecer todas las paradas con su dirección
+      const geocodingPromises = routeStopsUniq.map(async (c) => {
+          // Si el punto ya tiene una dirección (por ejemplo, si se cachea en la capa superior), no la buscamos.
+          // En este caso, siempre la buscamos para el ejemplo.
+          const address = await getAddressFromCoordinates(c.latitude, c.longitude);
+          return { ...c, address };
       });
-      const nextMarkers: MarkerItem[] = [
-        { id: 1, title: 'Origen', coordinate: originStop, type: 'origin' },
-        ...wp.map((c, i) => ({
-          id: i + 2,
-          title: `Parada ${i + 1}`,
-          coordinate: c,
-          type: 'waypoint' as const,
-        })),
-        {
-          id: wp.length + 2,
-          title: 'Destino',
-          coordinate: destinationStop,
-          type: 'destination',
-        },
-      ];
-      setRouteStopMarkers(nextMarkers);
-      const regionToCenter: Region = {
-        latitude: originStop.latitude,
-        longitude: originStop.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      };
-      centerMap(regionToCenter);
-    },
-    [centerMap],
-  );
+
+      const enrichedStops = await Promise.all(geocodingPromises);
+      
+      // 2. Separar puntos de la ruta y puntos de status (para MapViewDirections vs Markers)
+      const primaryRouteStops = enrichedStops.filter(s => !s.status);
+      const extraStops = enrichedStops.filter(s => !!s.status);
+
+      if (primaryRouteStops.length < 2) {
+          // Esto puede ocurrir si todos los puntos tienen status, lo cual no es una ruta válida.
+          setActiveRoute({});
+          setRouteStopMarkers([]);
+          setRouteCoords([]);
+          return;
+      }
+      
+      const originStop = primaryRouteStops[0];
+      const destinationStop = primaryRouteStops[primaryRouteStops.length - 1];
+      const wp = primaryRouteStops.slice(1, primaryRouteStops.length - 1);
+
+      setActiveRoute({ origin: originStop, destination: destinationStop, waypoints: wp });
+
+      const nextMarkers: MarkerItem[] = [
+        { id: 1, title: originStop.name || originStop.address || 'Origen', coordinate: originStop, type: 'origin' },
+        ...wp.map((c, i) => ({ id: 100 + i, title: c.name || c.address || `Punto ${i + 1}`, coordinate: c, type: 'waypoint' as const })),
+        { id: 2, title: destinationStop.name || destinationStop.address || 'Destino', coordinate: destinationStop, type: 'destination' },
+        // Incluir markers de status enriquecidos (si los hay)
+        ...extraStops.map((c, i) => ({ id: 200 + i, title: c.name || c.address || (c.status === 'red' ? 'Conductor' : 'Punto'), coordinate: c, type: 'waypoint' as const })),
+      ];
+      setRouteStopMarkers(nextMarkers);
+    },
+    [],
+  );
+
+  React.useEffect(() => {
+    const o = activeRoute.origin ?? origin;
+    const d = activeRoute.destination ?? destination;
+    const w = activeRoute.waypoints ?? waypoints;
+    if (!o || !d) {
+      setRouteCoords([]);
+      return;
+    }
+    setRouteCoords([o, ...(w ?? []), d]);
+  }, [activeRoute, origin, destination, waypoints]);
 
   return (
-    <View style={styles.container}>
-           {' '}
+    <AppLayout
+      renderTopBar={isDetailsMode ? null : renderTopBar}
+      animated={isDetailsMode}
+      bottomContent={({ collapsed, toggle }) =>
+        bottomContent?.({
+          collapsed,
+          toggle,
+          onRouteSelect: applyRouteStops,
+          onModeChange: setIsDetailsMode,
+        })
+      }
+    >
+      <View style={styles.container}>
       <MapView
         ref={mapRef}
         style={styles.map}
-        region={region}
-        onRegionChangeComplete={() => {
-          if (isFollowing) {
-            setIsFollowing(false);
-          }
-        }}
-        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
-        showsUserLocation
-        showsMyLocationButton={false}
+        initialRegion={region}
+        onMapReady={() => setMapReady(true)}
+        provider={PROVIDER_GOOGLE}
+        mapType="standard"
+        customMapStyle={uberLightMapStyle}
       >
-               {' '}
-        {markers.map(m => (
-          <Marker key={m.id} coordinate={m.coordinate} title={m.title} />
-        ))}
-        {routeStopMarkers.map((marker, idx) => (
-          <Marker
-            key={marker.id}
-            coordinate={marker.coordinate}
-            title={marker.title}
-            anchor={{ x: 0.5, y: 0.5 }}
-            tracksViewChanges={false}
-            onPress={() => setCollapsed(false)}
-          >
-            {marker.type === 'origin' ? (
-              <MarkerOrigin width={24} height={24} color="#00BFFF" />
-            ) : marker.type === 'destination' ? (
-              <MarkerDestination width={26} height={26} color="#FF3B30" />
-            ) : (
-              <MarkerOrigin
-                width={22}
-                height={22}
-                color={
-                  waypointColors[Math.max(0, (idx - 1) % waypointColors.length)]
-                }
+        {[
+          ...markers.map(m => (
+            <Marker key={m.id} coordinate={m.coordinate} title={m.title} />
+          )),
+
+          ...routeStopMarkers.map((marker) => (
+            <Marker
+              key={marker.id}
+              coordinate={marker.coordinate}
+              title={marker.title}
+              anchor={{ x: 0.5, y: 0.5 }}
+              tracksViewChanges={true}
+            >
+              {marker.type === 'origin' ? (
+                <MarkerOrigin width={24} height={24} color={COLOR_BLUE} />
+              ) : marker.type === 'destination' ? (
+                <MarkerOrigin width={24} height={24} color={COLOR_BLUE} />
+              ) : (
+                <MarkerOrigin width={22} height={22} color={marker.coordinate.status === 'red' ? COLOR_RED : COLOR_GREEN} />
+              )}
+            </Marker>
+          )),
+
+          (() => {
+            const o = activeRoute.origin ?? origin;
+            const d = activeRoute.destination ?? destination;
+            const w = activeRoute.waypoints ?? waypoints;
+            const apiKey = getMapsApiKey();
+            if (!o || !d || !apiKey) return null;
+            return (
+              <MapViewDirections
+                key="directions"
+                origin={o}
+                destination={d}
+                waypoints={w}
+                apikey={apiKey}
+                strokeWidth={5}
+                strokeColor="#5d01bc"
+                optimizeWaypoints={false}
+                mode="DRIVING"
+                onReady={result => {
+                  const coords = result?.coordinates ?? [];
+                  if (coords.length && mapRef.current) {
+                    mapRef.current.fitToCoordinates(coords, {
+                      edgePadding: { top: 100, right: 100, bottom: 100, left: 100 },
+                      animated: true,
+                    });
+                  } else {
+                    fitToRoute();
+                  }
+                }}
+                onError={() => {
+                  fitToRoute();
+                }}
               />
-            )}
-          </Marker>
-        ))}
-        {(() => {
-          const googleKey =
-            googleApiKey ??
-            (Config.GOOGLE_API_KEY || (Config as any).GOOGLE_MAPS_API_KEY);
-          const o = activeRoute.origin ?? origin;
-          const d = activeRoute.destination ?? destination;
-          const w = activeRoute.waypoints ?? waypoints;
-          if (!(o && d)) return null;
-          if (!googleKey) {
-            Alert.alert(
-              'Ruta',
-              'falla en la implementacion para trazar direcciones',
             );
-            return null;
-          }
-          return (
-            <MapViewDirections
-              origin={o}
-              destination={d}
-              waypoints={w}
-              apikey={googleKey as string}
-              strokeWidth={5}
-              strokeColor="#000"
-              optimizeWaypoints={true}
-              mode="DRIVING"
-              onReady={result => {
-                if (mapRef.current) {
-                  mapRef.current.fitToCoordinates(result.coordinates, {
-                    edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
-                    animated: true,
-                  });
-                }
-              }}
-              onError={_errorMessage => {
-                Alert.alert(
-                  'Ruta',
-                  'No se pudo trazar la ruta con Google Directions',
-                );
-              }}
-            />
-          );
-        })()}
-             {' '}
+          })(),
+        ]}
       </MapView>
-           
-      <View style={styles.followButtonContainer}>
-        <TouchableOpacity
-          style={[
-            styles.followButton,
-            isFollowing && styles.followButtonActive,
-          ]}
-          onPress={async () => {
-            if (isFollowing) {
-              setIsFollowing(false);
-            } else {
-              await centerMapOnCurrentLocation();
-            }
-          }}
-        >
-                 {' '}
-          <Image
-            source={{
-              uri: 'https://img.icons8.com/?size=100&id=zydjAKYE3RWr&format=png&color=000000',
-            }}
-            style={[styles.aimstyles, isFollowing && styles.aimstylesActive]}
-          />
-               {' '}
-        </TouchableOpacity>
-        <BottomBar collapsed={collapsed}>
-          {bottomContent?.({
-            collapsed,
-            toggle: () => setCollapsed(v => !v),
-            onRouteSelect: applyRouteStops,
-          })}
-        </BottomBar>
+
+      {!mapReady && (
+        <View style={styles.mapFallback}>
+          <Text style={styles.mapFallbackText}>Mapa no disponible. Verifica GOOGLE_MAPS_API_KEY y emulador con Google Play.</Text>
+        </View>
+      )}
+
+      {isDetailsMode && (
+        <View style={[styles.reportsButtonContainer, { top: insets.top + 8, right: 12 }] }>
+          <TouchableOpacity style={styles.reportsButton} onPress={() => {}}>
+            <Text style={styles.reportsButtonText}>Reportes</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       </View>
-         {' '}
-    </View>
+    </AppLayout>
   );
 }
 
-// --- ESTILOS ---
-
 const styles = StyleSheet.create({
-  container: {
-    ...StyleSheet.absoluteFill,
-  },
-  map: {
-    ...StyleSheet.absoluteFill,
-  },
+  container: { flex: 1 },
+  map: { flex: 1 },
+  mapFallback: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
+  mapFallbackText: { color: '#333', backgroundColor: '#FFFFFFEE', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  
   followButtonContainer: {
     width: '100%',
     position: 'absolute',
-    flexDirection: 'column',
-    justifyContent: 'center',
     bottom: 0,
     paddingHorizontal: 10,
+    flexDirection: 'column',
+    justifyContent: 'center',
   },
   followButton: {
-    marginRight: 10,
-    backgroundColor: '#fff',
     alignSelf: 'flex-end',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
+    backgroundColor: '#fff',
     borderRadius: 30,
-    padding: 5,
-    elevation: 4,
-    zIndex: 1000,
-    shadowColor: '#6f6f6fa5',
+    padding: 8,
+    elevation: 6,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowRadius: 4,
+    marginBottom: 8,
   },
-  followButtonActive: {
-    backgroundColor: '#ddd',
-  },
-  aimstyles: {
-    resizeMode: 'contain',
-    width: 28,
-    height: 24,
-    tintColor: '#000',
-  },
-  aimstylesActive: {
-    tintColor: '#1E90FF',
-    resizeMode: 'contain',
-  },
-  stopMarkerBase: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 3,
-    borderColor: '#fff',
-    backgroundColor: '#007AFF',
-  },
-  stopMarkerLarge: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-  },
+  aimstyles: { width: 28, height: 28, tintColor: '#000' },
+  reportsButtonContainer: { position: 'absolute', zIndex: 30 },
+  reportsButton: { backgroundColor: '#6D28D9', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8 },
+  reportsButtonText: { color: '#fff', fontSize: 12, fontWeight: '600' },
 });
