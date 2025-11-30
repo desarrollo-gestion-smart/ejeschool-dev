@@ -57,9 +57,11 @@ export default function ProfileDrawer({
     };
     const onHistory = () => {
       onClose();
+      navigation.navigate('Historias');
     };
     const onSettings = () => {
       onClose();
+      navigation.navigate('Paymethod');
     };
   //   const menuItems = [
   //     { icon: 'Home', label: 'Inicio', action: () => onNavigate('Home') },

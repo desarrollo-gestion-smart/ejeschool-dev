@@ -13,12 +13,14 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
+import ResponsiveLogo from '../../components/ResponsiveLogo';
+import LogoSvg from '../../assets/logo-s.svg';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Schoolsvg from '../../assets/school.svg';
 
-import ResponsiveLogo from '../../components/ResponsiveLogo';
-import LogoSvg from '../../assets/logo-s.svg';
 import { login } from '../../api/auth';
 
 // Solo esto necesitamos del nuevo Gesture Handler
@@ -31,12 +33,13 @@ type RootStackParamList = {
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-export default function Login() {
+export default function LoginFather() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const passwordRef = useRef<TextInput>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -44,7 +47,7 @@ export default function Login() {
       return;
     }
     try {
-      const res = await login({ email, password, role: 'parent' });
+      const res = await login({ email, password });
       const role = res.user.role;
       if (role === 'parent' || role === 'admin') {
         navigation.replace('PageFather');
@@ -76,7 +79,14 @@ export default function Login() {
 
       {/* GestureDetector envuelve toda la pantalla */}
       <GestureDetector gesture={swipeBackGesture}>
-        <View style={styles.container}>
+         <View style={styles.header}> 
+        <View style={styles.middlelogo}> 
+          <Schoolsvg
+        style={styles.schoolsvg}/>
+
+        </View>
+          <View style={styles.space}/>
+          <View style={styles.content}>
           <SafeAreaView style={{ flex: 1 }}>
             <KeyboardAvoidingView
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -89,67 +99,89 @@ export default function Login() {
                 >
                   <View style={styles.contentUp}>
                     <View style={styles.LogoWrapper}>
-                      <ResponsiveLogo source={LogoSvg} />
+                    <ResponsiveLogo SvgComponent={LogoSvg} />
                     </View>
-
-                    <View style={styles.card}>
-                      <Text style={styles.cardTitle}>Iniciar Sesión</Text>
-                      <View style={styles.titleBar} />
-
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Email"
-                        placeholderTextColor="#999"
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                        returnKeyType="next"
-                        blurOnSubmit={false}
-                        onSubmitEditing={() => passwordRef.current?.focus()}
-                      />
-
+                  <View style={styles.card}>
+                    <Text style={styles.cardTitle}>Iniciar Sesión</Text>
+                    <View style={styles.titleBar} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Email"
+                      placeholderTextColor="#999"
+                      value={email}
+                      onChangeText={setEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      returnKeyType="next"
+                      blurOnSubmit={false}
+                      onSubmitEditing={() => passwordRef.current?.focus()}
+                    />
+                    <View style={styles.passwordContainer}>
                       <TextInput
                         ref={passwordRef}
-                        style={styles.input}
+                        style={[styles.input, styles.inputPassword]}
                         placeholder="Contraseña"
                         placeholderTextColor="#999"
-                        secureTextEntry
+                        secureTextEntry={!showPassword}
                         value={password}
                         onChangeText={setPassword}
                         returnKeyType="done"
                       />
-
-                      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-                        <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
+                      <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword(v => !v)}>
+                        <MaterialCommunityIcons name={showPassword ? 'eye-off' : 'eye'} size={22} color="#666" />
                       </TouchableOpacity>
                     </View>
-
-                    <TouchableOpacity
-                      style={styles.registerButton}
-                      onPress={() => navigation.navigate('RegisterStudent')}
-                    >
-                      <Text style={styles.registerButtonText}>Registrarse</Text>
+                    <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+                      <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
                     </TouchableOpacity>
                   </View>
-
+                  <TouchableOpacity
+                    style={styles.registerButton}
+                    onPress={() => navigation.navigate('RegisterStudent')}
+                  >
+                    <Text style={styles.registerButtonText}>Registrarse</Text>
+                  </TouchableOpacity>
                   <Text style={styles.terms}>
                     Al hacer clic en iniciar, acepta nuestros Términos y condiciones
                   </Text>
-                </ScrollView>
-              </TouchableWithoutFeedback>
-            </KeyboardAvoidingView>
-          </SafeAreaView>
-        </View>
+                </View>
+              </ScrollView>
+            </TouchableWithoutFeedback>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </View>
+            </View>
+
       </GestureDetector>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  content: {
+    top: '10%',
+    position: 'absolute',
+    zIndex: 1,
     flex: 1,
+  },
+  header: {
+    zIndex: -1,
+    flex: 1,
+  },
+  middlelogo:{
     backgroundColor: '#5d01bc',
+    height: '45%',
+    alignContent:'flex-end',
+    justifyContent:'flex-end',
+  },
+   schoolsvg: {
+    flex: 1,
+    width: '100%',
+    
+  },
+  space:{
+    backgroundColor: 'white',
+    height: '70%',
   },
   LogoWrapper:{
     marginBottom: 24,
@@ -187,11 +219,31 @@ const styles = StyleSheet.create({
   },
   input: {
     width: '100%',
-    height: 42,
-    paddingHorizontal: 16,  
-    marginBottom: 16,
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    color: '#000',
+    backgroundColor: '#fff',
+    paddingHorizontal: 15,
+    marginBottom: 15,
     fontSize: 16,
-    backgroundColor: '#fafafa',
+  },
+  passwordContainer: {
+    position: 'relative',
+    width: '100%',
+  },
+  inputPassword: {
+    paddingRight: 44,
+  },
+  eyeButton: {
+    position: 'absolute',
+    right: 12,
+    top: 14,
+    height: 22,
+    width: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loginButton: {
     backgroundColor: '#5d01bc',

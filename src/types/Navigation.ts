@@ -9,4 +9,6 @@ export type RootStackParamList = {
   ChatSupport: undefined;
   Notifications: undefined;
   MyAccount: undefined;
+  Historias: undefined;
+  Paymethod: undefined;
 };

@@ -1,12 +1,12 @@
 import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Image, Alert } from 'react-native';
 import MapView, { Marker, Region, PROVIDER_GOOGLE } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import Config from 'react-native-config';
-import AppLayout from './layout/AppLayout';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+// import AppLayout from './layout/AppLayout';
+// import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MarkerOrigin from '../../assets/markers/marker-origin.svg';
-// import MarkerDestination from '../../assets/marker-destination.svg';
+import MarkerDestination from '../../assets/markers/marker-destination.svg';
 import type { Coordinate } from '../FooterRoutes/routesData';
 
 
@@ -18,18 +18,17 @@ type MarkerItem = {
 };
 
 type Props = {
-  markers?: MarkerItem[];
-  initialRegion?: Region;
-  bottomContent?: (args: {
-    collapsed: boolean;
-    toggle: () => void;
-    onRouteSelect: (stops: Coordinate[]) => void;
-    onModeChange: (isDetails: boolean) => void;
-  }) => React.ReactNode;
-  renderTopBar?: React.ReactNode;
-  origin?: Coordinate;
-  destination?: Coordinate;
-  waypoints?: Coordinate[];
+  markers?: MarkerItem[];
+  initialRegion?: Region;
+  bottomContent?: (args: {
+    collapsed: boolean;
+    toggle: () => void;
+    onRouteSelect: (stops: Coordinate[]) => void;
+    onModeChange: (isDetails: boolean) => void;
+  }) => React.ReactNode;
+  origin?: Coordinate;
+  destination?: Coordinate;
+  waypoints?: Coordinate[];
 };
 
 const getMapsApiKey = (): string => {
@@ -63,15 +62,13 @@ const getAddressFromCoordinates = async (latitude: number, longitude: number): P
 
 
 export default function MapComponent({
-  markers = [],
-  initialRegion,
-  bottomContent,
-  renderTopBar,
-  origin,
-  destination,
-  waypoints,
+  markers = [],
+  initialRegion,
+  bottomContent,
+  origin,
+  destination,
+  waypoints,
 }: Props) {
-  const insets = useSafeAreaInsets();
   const uberLightMapStyle = [
     { elementType: 'geometry', stylers: [{ color: '#FAFAFA' }] },
     { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#F7F8FA' }] },
@@ -100,11 +97,11 @@ export default function MapComponent({
   }>({});
   const [routeStopMarkers, setRouteStopMarkers] = React.useState<MarkerItem[]>([]);
   const [routeCoords, setRouteCoords] = React.useState<Coordinate[]>([]);
-  const COLOR_BLUE = '#2563EB';
-  const COLOR_GREEN = '#10B981';
-  const COLOR_RED = '#EF4444';
-  const [isDetailsMode, setIsDetailsMode] = React.useState(false);
-  const [mapReady, setMapReady] = React.useState(false);
+  // details mode not used currently
+  const [collapsed, setCollapsed] = React.useState(true);
+  const [isFollowing, setIsFollowing] = React.useState(false);
+  const waypointColors = ['#F59E0B', '#3B82F6', '#10B981', '#EF4444'];
+  const googleApiKey = getMapsApiKey();
   // no defaultStops: map does not auto-initialize from routesData
 
   const fallback: Region = {
@@ -216,104 +213,118 @@ export default function MapComponent({
   }, [activeRoute, origin, destination, waypoints]);
 
   return (
-    <AppLayout
-      renderTopBar={isDetailsMode ? null : renderTopBar}
-      animated={isDetailsMode}
-      bottomContent={({ collapsed, toggle }) =>
-        bottomContent?.({
-          collapsed,
-          toggle,
-          onRouteSelect: applyRouteStops,
-          onModeChange: setIsDetailsMode,
-        })
-      }
-    >
-      <View style={styles.container}>
+    <View style={styles.container}>
+           {' '}
       <MapView
         ref={mapRef}
         style={styles.map}
         initialRegion={region}
-        onMapReady={() => setMapReady(true)}
+        // onMapReady={() => {}}
         provider={PROVIDER_GOOGLE}
         mapType="standard"
         customMapStyle={uberLightMapStyle}
       >
-        {[
-          ...markers.map(m => (
-            <Marker key={m.id} coordinate={m.coordinate} title={m.title} />
-          )),
-
-          ...routeStopMarkers.map((marker) => (
-            <Marker
-              key={marker.id}
-              coordinate={marker.coordinate}
-              title={marker.title}
-              anchor={{ x: 0.5, y: 0.5 }}
-              tracksViewChanges={true}
-            >
-              {marker.type === 'origin' ? (
-                <MarkerOrigin width={24} height={24} color={COLOR_BLUE} />
-              ) : marker.type === 'destination' ? (
-                <MarkerOrigin width={24} height={24} color={COLOR_BLUE} />
-              ) : (
-                <MarkerOrigin width={22} height={22} color={marker.coordinate.status === 'red' ? COLOR_RED : COLOR_GREEN} />
-              )}
-            </Marker>
-          )),
-
-          (() => {
-            const o = activeRoute.origin ?? origin;
-            const d = activeRoute.destination ?? destination;
-            const w = activeRoute.waypoints ?? waypoints;
-            const apiKey = getMapsApiKey();
-            if (!o || !d || !apiKey) return null;
-            return (
-              <MapViewDirections
-                key="directions"
-                origin={o}
-                destination={d}
-                waypoints={w}
-                apikey={apiKey}
-                strokeWidth={5}
-                strokeColor="#5d01bc"
-                optimizeWaypoints={false}
-                mode="DRIVING"
-                onReady={result => {
-                  const coords = result?.coordinates ?? [];
-                  if (coords.length && mapRef.current) {
-                    mapRef.current.fitToCoordinates(coords, {
-                      edgePadding: { top: 100, right: 100, bottom: 100, left: 100 },
-                      animated: true,
-                    });
-                  } else {
-                    fitToRoute();
-                  }
-                }}
-                onError={() => {
-                  fitToRoute();
-                }}
+               {' '}
+        {markers.map(m => (
+          <Marker key={m.id} coordinate={m.coordinate} title={m.title} />
+        ))}
+        {routeStopMarkers.map((marker, idx) => (
+          <Marker
+            key={marker.id}
+            coordinate={marker.coordinate}
+            title={marker.title}
+            anchor={{ x: 0.5, y: 0.5 }}
+            tracksViewChanges={false}
+            onPress={() => setCollapsed(false)}
+          >
+            {marker.type === 'origin' ? (
+              <MarkerOrigin width={24} height={24} color="#00BFFF" />
+            ) : marker.type === 'destination' ? (
+              <MarkerDestination width={26} height={26} color="#FF3B30" />
+            ) : (
+              <MarkerOrigin
+                width={22}
+                height={22}
+                color={
+                  waypointColors[Math.max(0, (idx - 1) % waypointColors.length)]
+                }
               />
+            )}
+          </Marker>
+        ))}
+        {(() => {
+          const googleKey = googleApiKey || (Config as any).GOOGLE_MAPS_API_KEY;
+          const o = activeRoute.origin ?? origin;
+          const d = activeRoute.destination ?? destination;
+          const w = activeRoute.waypoints ?? waypoints;
+          if (!(o && d)) return null;
+          if (!googleKey) {
+            Alert.alert(
+              'Ruta',
+              'falla en la implementacion para trazar direcciones',
             );
-          })(),
-        ]}
+            return null;
+          }
+          return (
+            <MapViewDirections
+              origin={o}
+              destination={d}
+              waypoints={w}
+              apikey={googleKey as string}
+              strokeWidth={5}
+              strokeColor="#000"
+              optimizeWaypoints={true}
+              mode="DRIVING"
+              onReady={result => {
+                if (mapRef.current) {
+                  mapRef.current.fitToCoordinates(result.coordinates, {
+                    edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+                    animated: true,
+                  });
+                }
+              }}
+              onError={_errorMessage => {
+                Alert.alert(
+                  'Ruta',
+                  'No se pudo trazar la ruta con Google Directions',
+                );
+              }}
+            />
+          );
+        })()}
+             {' '}
       </MapView>
-
-      {!mapReady && (
-        <View style={styles.mapFallback}>
-          <Text style={styles.mapFallbackText}>Mapa no disponible. Verifica GOOGLE_MAPS_API_KEY y emulador con Google Play.</Text>
-        </View>
-      )}
-
-      {isDetailsMode && (
-        <View style={[styles.reportsButtonContainer, { top: insets.top + 8, right: 12 }] }>
-          <TouchableOpacity style={styles.reportsButton} onPress={() => {}}>
-            <Text style={styles.reportsButtonText}>Reportes</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
+           
+      <View style={styles.followButtonContainer}>
+        <TouchableOpacity
+          style={styles.followButton}
+          onPress={async () => {
+            if (isFollowing) {
+              setIsFollowing(false);
+            } else {
+              // Placeholder follow behavior
+              setIsFollowing(true);
+            }
+          }}
+        >
+                 {' '}
+          <Image
+            source={{
+              uri: 'https://img.icons8.com/?size=100&id=zydjAKYE3RWr&format=png&color=000000',
+            }}
+            style={styles.aimstyles}
+          />
+               {' '}
+        </TouchableOpacity>
+        {bottomContent?.({
+          collapsed,
+          toggle: () => setCollapsed(v => !v),
+          onRouteSelect: applyRouteStops,
+          onModeChange: (_v: boolean) => {},
+        })}
       </View>
-    </AppLayout>
+         {' '}
+    </View>
   );
 }
 

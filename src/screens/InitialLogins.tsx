@@ -1,11 +1,11 @@
 import { StatusBar, StyleSheet, View, Text, useWindowDimensions } from 'react-native';
 import ResponsiveLogo from '../components/ResponsiveLogo';
+import LogoSvg from '../assets/logo-s.svg';
 
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import ButtonText from '../components/Button/ButtonText';
 import { RootStackParamList } from '../types/navigation';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import LogoSvg from '../assets/logo-s.svg';
 import Schoolsvg from '../assets/school.svg';
 type Props = NativeStackScreenProps<RootStackParamList, 'InitialLogins'>;
 
@@ -18,9 +18,9 @@ export default function InitialLogins({ navigation }: Props) {
       <StatusBar barStyle="light-content" />
       <SafeAreaView style={styles.container}>
         <View style={[styles.content, { top: contentTop }] }>
-          
-            <ResponsiveLogo source={LogoSvg} sizePercent={0.5} maxWidth={100} maxHeight={100} />
-          
+          <View style={styles.logoContainer}>
+            <ResponsiveLogo SvgComponent={LogoSvg} sizePercent={0.33} maxWidth={121} maxHeight={128} />
+          </View>
 
           <Text style={[styles.title, { fontSize: titleSize }]}>EjeSchool</Text>
 
@@ -37,7 +37,6 @@ export default function InitialLogins({ navigation }: Props) {
           />
         </View>
         <Schoolsvg
-        width={'100%'}
         style={styles.schoolsvg}/>
       </SafeAreaView>
     </SafeAreaProvider>
@@ -52,15 +51,18 @@ const styles = StyleSheet.create({
 
   content: {
     flex: 1,
-    marginTop: '50%',
+    marginTop: '42%',
     justifyContent: 'flex-start',
     alignItems: 'center',
     paddingHorizontal: 10,
   },
+  logoContainer: {
+    marginBottom: 10,
+  },
 
   customButton: {
     backgroundColor: '#fff',
-    marginTop: 30,
+    marginTop: 40,
     height: 45,
     width: '80%',
     alignSelf: 'center',
@@ -70,7 +72,7 @@ const styles = StyleSheet.create({
 
   customButtonSecond: {
     backgroundColor: '#2196F3',
-    marginTop: 30,
+    marginTop: 20,
     height: 45,
     width: '80%',
     alignSelf: 'center',
@@ -82,13 +84,11 @@ const styles = StyleSheet.create({
     fontFamily: 'aber',
     fontSize: 32,
     color: 'white',
-    marginBottom: 20,
   },
   schoolsvg: {
     flex: 1,
     width: '100%',
-    
-    height: 200,
+    zIndex: -1,
     top: 20,
   },
 

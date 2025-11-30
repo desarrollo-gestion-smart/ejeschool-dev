@@ -4,17 +4,24 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../types/navigation';
 
 import InitialLogins from '../screens/InitialLogins';
-import LoginFather from '../screens/Login/LoginFather';
+
+//Driver 
 import LoginDriver from '../screens/Login/LoginDriver';
+import PageDriver from '../screens/pages/PageDriver';
+
+
+//father 
+import LoginFather from '../screens/Login/LoginFather';
+import PageFather from '../screens/pages/father/PageFather';
 import RegisterStudent from '../screens/RegisterStudent';
 import DashboardFather from '../screens/pages/father/components/dashboard/DashboardFather';
 import ChatSupport from '../screens/pages/father/ChatComponent';
 import Notifications from '../screens/pages/father/components/dashboard/Notificaciones';
 import MyAccount from '../screens/pages/father/components/dashboard/Myaccount';
+import Historias from '../screens/pages/father/components/dashboard/Historias';
+import Paymethod from '../screens/pages/father/components/dashboard/Paymethod';
 
 
-import PageDriver from '../screens/pages/PageDriver';
-import PageFather from '../screens/pages/father/PageFather';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -38,6 +45,8 @@ export default function AppNavigator() {
         <Stack.Screen name="ChatSupport" component={ChatSupport} />
         <Stack.Screen name="Notifications" component={Notifications} />
         <Stack.Screen name="MyAccount" component={MyAccount} />
+        <Stack.Screen name="Historias" component={Historias} />
+        <Stack.Screen name="Paymethod" component={Paymethod} />
       </Stack.Navigator>
     </NavigationContainer>
   );

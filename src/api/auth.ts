@@ -1,27 +1,34 @@
-import api from './base';
+import api, { setAuthToken } from './base';
 
 export interface LoginRequest {
   email: string;
   password: string;
-  role: 'parent' | 'driver' | 'admin';
 }
 
 export interface LoginResponse {
-  token: string;
-  user: {
-    id: string;
-    name: string;
-    role: string;
-  };
+  id?: number;
+  first_name?: string;
+  last_name?: string;
+  full_name?: string;
+  email: string;
+  avatar?: string;
+  roles_id?: number[];
+  is_activated?: boolean;
+  api_token?: string;
+  token?: string;
+  [key: string]: any;
 }
 
 export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   const response = await api.post('/auth/login', data);
-  return response.data;
+  const payload = response.data;
+  setAuthToken(payload?.api_token || payload?.token || null);
+  return payload;
 };
 
 export const logout = async (): Promise<void> => {
   await api.post('/auth/logout');
+  setAuthToken(null);
 };
 
 export interface RegisterRequest {
@@ -43,7 +50,9 @@ export interface RegisterResponse {
 
 export const register = async (data: RegisterRequest): Promise<RegisterResponse> => {
   const response = await api.post('/auth/register', data);
-  return response.data;
+  const payload = response.data;
+  setAuthToken(payload?.token || null);
+  return payload;
 };
 export interface SocialRegisterResponse {
   token: string;
@@ -57,7 +66,9 @@ export interface SocialRegisterResponse {
 
 export const registerWithGoogle = async (data: SocialRegisterRequest): Promise<SocialRegisterResponse> => {
   const response = await api.post('/auth/google', data); 
-  return response.data;
+  const payload = response.data;
+  setAuthToken(payload?.token || null);
+  return payload;
 };
 
 export interface SocialRegisterRequest {
