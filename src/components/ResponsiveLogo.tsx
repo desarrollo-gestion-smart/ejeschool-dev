@@ -2,7 +2,8 @@ import React, { useMemo } from 'react';
 import { View, Image, StyleSheet, useWindowDimensions, ImageSourcePropType, ViewStyle } from 'react-native';
 
 type Props = {
-  source: ImageSourcePropType;
+  source?: ImageSourcePropType;
+  SvgComponent?: React.ComponentType<{ width?: number; height?: number }>;
   sizePercent?: number;
   maxWidth?: number;
   maxHeight?: number;
@@ -12,6 +13,7 @@ type Props = {
 
 export default function ResponsiveLogo({
   source,
+  SvgComponent,
   sizePercent = 0.5,
   maxWidth = 150,
   maxHeight = 140,
@@ -30,7 +32,11 @@ export default function ResponsiveLogo({
 
   return (
     <View style={[styles.logoContainer, containerStyle]}>
-      <Image source={source} style={[styles.logo, dynamic.wrapper]} />
+      {SvgComponent ? (
+        <SvgComponent width={w} height={h} preserveAspectRatio="xMidYMid meet" />
+      ) : (
+        <Image source={source as ImageSourcePropType} style={[styles.logo, dynamic.wrapper]} />
+      )}
     </View>
   );
 }

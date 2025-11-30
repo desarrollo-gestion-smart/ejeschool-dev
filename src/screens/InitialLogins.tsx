@@ -1,5 +1,6 @@
 import { StatusBar, StyleSheet, View, Text, useWindowDimensions } from 'react-native';
 import ResponsiveLogo from '../components/ResponsiveLogo';
+import LogoSvg from '../assets/logo-s.svg';
 
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import ButtonText from '../components/Button/ButtonText';
@@ -19,7 +20,7 @@ export default function InitialLogins({ navigation }: Props) {
       <SafeAreaView style={styles.container}>
         <View style={[styles.content, { top: contentTop }] }>
           <View style={styles.logoContainer}>
-            <ResponsiveLogo source={require('../assets/logo-s.png')} sizePercent={0.5} maxWidth={200} maxHeight={220} />
+            <ResponsiveLogo SvgComponent={LogoSvg} sizePercent={0.33} maxWidth={121} maxHeight={128} />
           </View>
 
           <Text style={[styles.title, { fontSize: titleSize }]}>EjeSchool</Text>

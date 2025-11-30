@@ -14,6 +14,8 @@ import {
   Alert,
 } from 'react-native';
 import ResponsiveLogo from '../../components/ResponsiveLogo';
+import LogoSvg from '../../assets/logo-s.svg';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -28,12 +30,13 @@ type RootStackParamList = {
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-export default function Login() {
+export default function LoginFather() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const passwordRef = useRef<TextInput>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -41,7 +44,7 @@ export default function Login() {
       return;
     }
     try {
-      const res = await login({ email, password, role: 'parent' });
+      const res = await login({ email, password });
       const role = res.user.role;
       if (role === 'parent' || role === 'admin') {
         navigation.replace('PageFather');
@@ -70,7 +73,7 @@ export default function Login() {
                 </View>
 
                 <View style={styles.contentUp}>
-                  <ResponsiveLogo  source={require('../../assets/logo-s.png')} />
+                  <ResponsiveLogo SvgComponent={LogoSvg} />
 
                   <View style={styles.card}>
                     <Text style={styles.cardTitle}>Iniciar Sesión</Text>
@@ -89,16 +92,21 @@ export default function Login() {
                       onSubmitEditing={() => passwordRef.current?.focus()}
                     />
 
-                    <TextInput
-                      ref={passwordRef}
-                      style={styles.input}
-                      placeholder="Contraseña"
-                      placeholderTextColor="#999"
-                      secureTextEntry
-                      value={password}
-                      onChangeText={setPassword}
-                      returnKeyType="done"
-                    />
+                    <View style={styles.passwordContainer}>
+                      <TextInput
+                        ref={passwordRef}
+                        style={[styles.input, styles.inputPassword]}
+                        placeholder="Contraseña"
+                        placeholderTextColor="#999"
+                        secureTextEntry={!showPassword}
+                        value={password}
+                        onChangeText={setPassword}
+                        returnKeyType="done"
+                      />
+                      <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword(v => !v)}>
+                        <MaterialCommunityIcons name={showPassword ? 'eye-off' : 'eye'} size={22} color="#666" />
+                      </TouchableOpacity>
+                    </View>
 
                     <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
                       <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
@@ -199,9 +207,27 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 10,
+    color: '#000',
+    backgroundColor: '#fff',
     paddingHorizontal: 15,
     marginBottom: 15,
     fontSize: 16,
+  },
+  passwordContainer: {
+    position: 'relative',
+    width: '100%',
+  },
+  inputPassword: {
+    paddingRight: 44,
+  },
+  eyeButton: {
+    position: 'absolute',
+    right: 12,
+    top: 14,
+    height: 22,
+    width: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loginButton: {
     backgroundColor: '#5d01bc',

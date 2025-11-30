@@ -288,7 +288,6 @@ export default function MapComponent({
 
   return (
     <View style={styles.container}>
-           {' '}
       <MapView
         ref={mapRef}
         style={styles.map}
@@ -302,7 +301,6 @@ export default function MapComponent({
         showsUserLocation
         showsMyLocationButton={false}
       >
-               {' '}
         {markers.map(m => (
           <Marker key={m.id} coordinate={m.coordinate} title={m.title} />
         ))}
@@ -372,9 +370,7 @@ export default function MapComponent({
             />
           );
         })()}
-             {' '}
       </MapView>
-           
       <View style={styles.followButtonContainer}>
         <TouchableOpacity
           style={[
@@ -389,14 +385,12 @@ export default function MapComponent({
             }
           }}
         >
-                 {' '}
           <Image
             source={{
               uri: 'https://img.icons8.com/?size=100&id=zydjAKYE3RWr&format=png&color=000000',
             }}
             style={[styles.aimstyles, isFollowing && styles.aimstylesActive]}
           />
-               {' '}
         </TouchableOpacity>
         <BottomBar collapsed={collapsed}>
           {bottomContent?.({
@@ -406,7 +400,6 @@ export default function MapComponent({
           })}
         </BottomBar>
       </View>
-         {' '}
     </View>
   );
 }

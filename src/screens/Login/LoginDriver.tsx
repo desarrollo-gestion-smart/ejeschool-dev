@@ -12,8 +12,11 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import ResponsiveLogo from '../../components/ResponsiveLogo';
+import LogoSvg from '../../assets/logo-s.svg';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -27,28 +30,36 @@ type RootStackParamList = {
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-export default function Login() {
+export default function LoginDriver() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const passwordRef = useRef<TextInput>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Por favor, complete todos los campos');
       return;
     }
+    setIsLoading(true);
     try {
-      const res = await login({ email, password, role: 'driver' });
-      const role = res.user.role;
-      if (role === 'driver' || role === 'admin') {
+      console.log('LoginDriver request', { endpoint: '/auth/login', email, password: '***' });
+      const res = await login({ email, password });
+      console.log('LoginDriver response', res);
+      const token = (res as any)?.api_token || (res as any)?.token;
+      if (token) {
         navigation.replace('PageDriver');
       } else {
-        Alert.alert('Acceso denegado', 'Tu rol no tiene acceso a esta pantalla');
+        Alert.alert('Login', 'Respuesta sin token');
       }
     } catch (e: any) {
+      console.log('LoginDriver error', e?.response?.data || e);
       Alert.alert('Login fallido', e?.response?.data?.message || 'Error de autenticación');
+    } finally {
+      setIsLoading(false);
     }
   };
   
@@ -69,7 +80,7 @@ export default function Login() {
                 </View>
                
                <View style={styles.contentUp}>
-                  <ResponsiveLogo  source={require('../../assets/logo-s.png')} />
+                 <ResponsiveLogo SvgComponent={LogoSvg} />
 
                 <View style={styles.card}>
                   <Text style={styles.cardTitle}>Iniciar Sesión</Text>
@@ -87,19 +98,28 @@ export default function Login() {
                     onSubmitEditing={() => passwordRef.current?.focus()}
                   />
 
-                  <TextInput
-                    ref={passwordRef}
-                    style={styles.input}
-                    placeholder="Contraseña"
-                    placeholderTextColor="#999"
-                    secureTextEntry
-                    value={password}
-                    onChangeText={setPassword}
-                    returnKeyType="done"
-                  />
+                  <View style={styles.passwordContainer}>
+                    <TextInput
+                      ref={passwordRef}
+                      style={[styles.input, styles.inputPassword]}
+                      placeholder="Contraseña"
+                      placeholderTextColor="#999"
+                      secureTextEntry={!showPassword}
+                      value={password}
+                      onChangeText={setPassword}
+                      returnKeyType="done"
+                    />
+                    <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword(v => !v)}>
+                      <MaterialCommunityIcons name={showPassword ? 'eye-off' : 'eye'} size={22} color="#666" />
+                    </TouchableOpacity>
+                  </View>
 
-                  <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-                    <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
+                  <TouchableOpacity style={[styles.loginButton, isLoading && styles.loginButtonDisabled]} onPress={handleLogin} disabled={isLoading}>
+                    {isLoading ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
+                    )}
                   </TouchableOpacity>
                 </View>
                 </View>
@@ -194,9 +214,27 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 10,
+    color: '#000',
+    backgroundColor: '#fff',
     paddingHorizontal: 15,
     marginBottom: 15,
     fontSize: 16,
+  },
+  passwordContainer: {
+    position: 'relative',
+    width: '100%',
+  },
+  inputPassword: {
+    paddingRight: 44,
+  },
+  eyeButton: {
+    position: 'absolute',
+    right: 12,
+    top: 14,
+    height: 22,
+    width: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loginButton: {
     backgroundColor: '#5d01bc',
@@ -206,6 +244,9 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     marginTop: 10,
+  },
+  loginButtonDisabled: {
+    opacity: 0.8,
   },
   loginButtonText: {
     color: 'white',
