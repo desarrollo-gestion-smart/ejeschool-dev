@@ -1,11 +1,23 @@
 // src/components/map/SimpleRouteMap.tsx
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
-import MapViewDirections from 'react-native-maps-directions';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../../../../../types/Navigation';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import Config from 'react-native-config';
-import MarkerOrigin from '../../../../../assets/marker-origin.svg';
-import MarkerDestination from '../../../../../assets/marker-destination.svg'; // Asegúrate de tener este SVG
+
+
+//mapas
+import MapViewDirections from 'react-native-maps-directions';
+import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+
+
+//iconos
+import MarkerDestination from '../../../../../assets/markers/marker-destination.svg'; // Asegúrate de tener este SVG
+import MarkerOrigin from '../../../../../assets/markers/marker-origin.svg';
+import ProfileDrawer from '../ProfileDrawer';
+import Lessthen from '../../../../../assets/icons/lessthen.svg';
+import CloseIcon from '../../../../../assets/icons/close.svg';
 
 type Props = {
   pickup: { latitude: number; longitude: number; name?: string };
@@ -17,7 +29,6 @@ type Props = {
 const getMapsApiKey = () => {
   return (Config as any)?.GOOGLE_MAPS_API_KEY || '';
 };
-
 const uberLightMapStyle = [
     { elementType: 'geometry', stylers: [{ color: '#FAFAFA' }] },
     { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#F7F8FA' }] },
@@ -41,6 +52,9 @@ const uberLightMapStyle = [
 
 export default function MapFather({ pickup, dropoff, distance: _distance, duration: _duration }: Props) {
   const mapRef = useRef<MapView>(null);
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'PageFather'>>();
+  const onPress = () => navigation.navigate('PageFather');
+  const [profileOpen, setProfileOpen] = React.useState(false);
 
   const initialRegion: Region = {
     latitude: (pickup.latitude + dropoff.latitude) / 2,
@@ -62,6 +76,12 @@ export default function MapFather({ pickup, dropoff, distance: _distance, durati
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity style={styles.closeButton} onPress={onPress}>
+        <CloseIcon width={24} height={24} fill={'#fbfbfbff'} />
+      </TouchableOpacity>
+       <TouchableOpacity style={styles.profileButton} onPress={() => setProfileOpen(true)}>
+             <Lessthen width={24} height={24} fill={'#98989B'} /> 
+              </TouchableOpacity>
       <MapView
         ref={mapRef}
         style={styles.map}
@@ -76,9 +96,9 @@ export default function MapFather({ pickup, dropoff, distance: _distance, durati
           </View>
         </Marker>
 
-        {/* Marcador de Destino - Pin rojo clásico */}
+        {/* Marcador de Destino - Pin rojo clásico */}  
         <Marker coordinate={dropoff} anchor={{ x: 0.5, y: 1 }}>
-          <MarkerDestination width={40} height={40} />
+          <MarkerDestination width={40} height={40} fill="#2641dcff" />
         </Marker>
 
         {/* Línea de ruta */}
@@ -99,6 +119,15 @@ export default function MapFather({ pickup, dropoff, distance: _distance, durati
           />
         ) : null}
       </MapView>
+       {profileOpen && (
+              <ProfileDrawer
+                visible={profileOpen}
+                onClose={() => setProfileOpen(false)}
+                onLogout={() => navigation.reset({ index: 0, routes: [{ name: 'InitialLogins' }] })}
+                userName="Larry Davis"
+                vehiclePlate="SDF-5221"
+              />
+            )}
     </View>
   );
 }
@@ -118,4 +147,40 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
+  closeButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 36,
+    height: 36,
+    zIndex: 100,
+    borderRadius: 18,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeButtonText: { color: '#98989B', fontSize: 18, fontWeight: '600' },
+   profileButton: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.55,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  profileButtonText: { color: '#98989B', fontSize: 24, fontWeight: '600', lineHeight: 24 },
 });

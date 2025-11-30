@@ -6,6 +6,7 @@ import ButtonText from '../components/Button/ButtonText';
 import { RootStackParamList } from '../types/navigation';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import LogoSvg from '../assets/logo-s.svg';
+import Schoolsvg from '../assets/school.svg';
 type Props = NativeStackScreenProps<RootStackParamList, 'InitialLogins'>;
 
 export default function InitialLogins({ navigation }: Props) {
@@ -35,6 +36,9 @@ export default function InitialLogins({ navigation }: Props) {
             style={styles.customButtonSecond}
           />
         </View>
+        <Schoolsvg
+        width={'100%'}
+        style={styles.schoolsvg}/>
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -79,6 +83,13 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: 'white',
     marginBottom: 20,
+  },
+  schoolsvg: {
+    flex: 1,
+    width: '100%',
+    
+    height: 200,
+    top: 20,
   },
 
 });

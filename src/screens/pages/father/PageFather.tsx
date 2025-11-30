@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
 
   listSection: {
     backgroundColor: '#fff',
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     paddingTop: 10,
     marginBottom: 10,
   },
@@ -168,13 +168,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   studentImage: {
-    width: 45,
-    height: 45,
+    width: 40,
+    height: 40,
     borderRadius: 22.5,
     marginRight: 15,
   },
   studentNameText: {
-    fontSize: 18,
+    fontSize: 14,
+    fontWeight: '900',
     color: '#333',
   },
   actionButtonContainer: {
@@ -193,7 +194,7 @@ const styles = StyleSheet.create({
 
   addButtonWrapper: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: '#fff',
@@ -203,8 +204,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 15,
     borderTopRightRadius: 15,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 1,
     shadowRadius: 5,
     elevation: 10,
   },
@@ -214,10 +215,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   addButton: {
-    backgroundColor: '#6A0DAD',
+    backgroundColor: '#5d01bc',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 15,
+    paddingVertical:8,
     borderRadius: 10,
   },
   addButtonText: {

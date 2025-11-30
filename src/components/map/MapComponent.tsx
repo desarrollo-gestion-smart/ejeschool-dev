@@ -5,7 +5,7 @@ import MapViewDirections from 'react-native-maps-directions';
 import Config from 'react-native-config';
 import AppLayout from './layout/AppLayout';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import MarkerOrigin from '../../assets/marker-origin.svg';
+import MarkerOrigin from '../../assets/markers/marker-origin.svg';
 // import MarkerDestination from '../../assets/marker-destination.svg';
 import type { Coordinate } from '../FooterRoutes/routesData';
 

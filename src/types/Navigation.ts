@@ -7,4 +7,6 @@ export type RootStackParamList = {
   PageFather: undefined;
   DashboardFather: undefined;
   ChatSupport: undefined;
+  Notifications: undefined;
+  MyAccount: undefined;
 };

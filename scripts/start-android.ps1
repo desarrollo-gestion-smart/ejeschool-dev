@@ -5,6 +5,11 @@ param(
 $projectRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $projectRoot
 
+# Ensure NODE_ENV is set for Metro and tooling
+if (-not $env:NODE_ENV -or $env:NODE_ENV -eq "") {
+  $env:NODE_ENV = "development"
+}
+
 if (-not $env:ANDROID_SDK_ROOT -and -not $env:ANDROID_HOME) {
   $defaultSdk = "$env:LOCALAPPDATA\Android\Sdk"
   if (Test-Path $defaultSdk) { $env:ANDROID_SDK_ROOT = $defaultSdk }

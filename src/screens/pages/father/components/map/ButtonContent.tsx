@@ -17,14 +17,14 @@ export default function CancelRouteButton({ onPress }: Props) {
 const styles = StyleSheet.create({
   button: {
     backgroundColor: '#242e42',
-    paddingVertical: 12,
+    paddingVertical: 10,
     marginBottom: 30,
     borderRadius: 12,
     alignItems: 'center',
   },
   text: {
     color: '#FFFFFF',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '900',
   },
 });

@@ -9,6 +9,15 @@ export type Coordinate = {
     address?: string; // <--- The property needed for Geocoding Inversa
 };
 
+export type StudentInfo = {
+  nombre: string;
+  apellido: string;
+  email: string;
+  identificacion: string;
+  telefono: string;
+  rol: 'estudiante';
+};
+
 export type RouteData = {
   id: number;
   name: string;
@@ -16,8 +25,9 @@ export type RouteData = {
   time: string;
   type: 'Entrada' | 'Salida';
   description?: string;
-  students?: string[];
-  stops: (Coordinate & { student?: string })[];
+  students?: string[];
+  stops: (Coordinate & { student?: string } & { Directions?: string })[];
+  info?: StudentInfo[];
 
 };
 
@@ -32,16 +42,22 @@ const conciseRoutes: RouteData[] = [
     time: '12 min',
     type: 'Entrada',
     description: 'Recorrido corto por Microcentro',
-    students: ['Lucía Gómez', 'Mateo López', 'Sofía Martínez', 'Mateo L.'],
+    students: ['Lucía Gómez', 'Mateo López', 'Sofía Martínez', 'Mateo L.'],
+    info: [
+      { nombre: 'Lucía', apellido: 'Gómez', email: 'lucia.gomez@example.com', identificacion: 'DNI-30111222', telefono: '+54 11 5555-0001', rol: 'estudiante' },
+      { nombre: 'Mateo', apellido: 'López', email: 'mateo.lopez@example.com', identificacion: 'DNI-30222333', telefono: '+54 11 5555-0002', rol: 'estudiante' },
+      { nombre: 'Sofía', apellido: 'Martínez', email: 'sofia.martinez@example.com', identificacion: 'DNI-30333444', telefono: '+54 11 5555-0003', rol: 'estudiante' },
+      { nombre: 'Mateo', apellido: 'L.', email: 'mateo.l@example.com', identificacion: 'DNI-30444555', telefono: '+54 11 5555-0004', rol: 'estudiante' }
+    ],
     stops: [
       // Origen
-      { latitude: -34.60360, longitude: -58.38150, name: 'Recogida en curso', student: 'Lucía Gómez' }, 
+      { latitude: -34.60360, longitude: -58.38150, Directions: 'Recogida en curso', student: 'Lucía Gómez' }, 
       // Waypoint 1
-      { latitude: -34.60250, longitude: -58.38080, name: 'Parada intermedia A',  student: 'Mateo López' },
+      { latitude: -34.60250, longitude: -58.38080, Directions: 'Recogida en curso',  student: 'Mateo López' },
       // Waypoint 2
-      { latitude: -34.60180, longitude: -58.38040, name: 'Colegio NSR',  student: 'Sofía Martínez' },      
+      { latitude: -34.60180, longitude: -58.38040, Directions: 'Colegio NSR',  student: 'Sofía Martínez' },      
       // Destin
-      { latitude: -34.59970, longitude: -58.38115, name: 'Destino Final',  student: 'Mateo L.' }, 
+      { latitude: -34.59970, longitude: -58.38115, Directions: 'Destino Final',  student: 'Mateo L.' }, 
       // Puntos de Status (adicionales, no forzan la ruta)
       { latitude: -34.60420, longitude: -58.38230, status: 'red', name: 'Conductor' },
       { latitude: -34.60120, longitude: -58.38010, status: 'green', name: 'Punto de Interés' },
@@ -54,7 +70,12 @@ const conciseRoutes: RouteData[] = [
     time: '10 min',
     type: 'Salida',
     description: 'Retiro → Puerto Madero',
-    students: ['Valentina R.', 'Thiago S.', 'Benjamín C.'],
+    students: ['Valentina R.', 'Thiago S.', 'Benjamín C.'],
+    info: [
+      { nombre: 'Valentina', apellido: 'R.', email: 'valentina.r@example.com', identificacion: 'DNI-31111222', telefono: '+54 11 5555-0011', rol: 'estudiante' },
+      { nombre: 'Thiago', apellido: 'S.', email: 'thiago.s@example.com', identificacion: 'DNI-32222333', telefono: '+54 11 5555-0012', rol: 'estudiante' },
+      { nombre: 'Benjamín', apellido: 'C.', email: 'benjamin.c@example.com', identificacion: 'DNI-33333444', telefono: '+54 11 5555-0013', rol: 'estudiante' }
+    ],
     stops: [
       // Origen
       { latitude: -34.59140, longitude: -58.37490, name: 'Origen Retiro' },
@@ -74,7 +95,12 @@ const conciseRoutes: RouteData[] = [
     time: '15 min',
     type: 'Entrada',
     description: 'Palermo → Facultad de Derecho',
-    students: ['Isabella R.', 'Joaquín M.', 'Emma P.'],
+    students: ['Isabella R.', 'Joaquín M.', 'Emma P.'],
+    info: [
+      { nombre: 'Isabella', apellido: 'R.', email: 'isabella.r@example.com', identificacion: 'DNI-34111222', telefono: '+54 11 5555-0021', rol: 'estudiante' },
+      { nombre: 'Joaquín', apellido: 'M.', email: 'joaquin.m@example.com', identificacion: 'DNI-35222333', telefono: '+54 11 5555-0022', rol: 'estudiante' },
+      { nombre: 'Emma', apellido: 'P.', email: 'emma.p@example.com', identificacion: 'DNI-36333444', telefono: '+54 11 5555-0023', rol: 'estudiante' }
+    ],
     stops: [
       // Origen
       { latitude: -34.58805, longitude: -58.39060, name: 'Origen Palermo' },
@@ -96,7 +122,11 @@ const conciseRoutes: RouteData[] = [
     time: '5 min',
     type: 'Entrada',
     description: 'Ruta de prueba estable por Microcentro',
-    students: ['Juan P.', 'Ana R.'],
+    students: ['Juan P.', 'Ana R.'],
+    info: [
+      { nombre: 'Juan', apellido: 'P.', email: 'juan.p@example.com', identificacion: 'DNI-37111222', telefono: '+54 11 5555-0031', rol: 'estudiante' },
+      { nombre: 'Ana', apellido: 'R.', email: 'ana.r@example.com', identificacion: 'DNI-38222333', telefono: '+54 11 5555-0032', rol: 'estudiante' }
+    ],
     stops: [
       // Origen (Plaza de Mayo)
       { latitude: -34.60620, longitude: -58.37320, name: 'Plaza de Mayo' }, 

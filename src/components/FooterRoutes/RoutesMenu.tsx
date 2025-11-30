@@ -20,8 +20,8 @@ export type Coordinate = {
 };
 
 import VehicleIcon from '../../assets/vehicle.svg';
-import MarkerOrigin from '../../assets/marker-origin.svg';
-import MarkerDestination from '../../assets/marker-destination.svg';
+import MarkerOrigin from '../../assets/markers/marker-origin.svg';
+import MarkerDestination from '../../assets/markers/marker-destination.svg';
 
 type Props = {
   title?: string;
@@ -169,15 +169,15 @@ export default function RoutesMenu({
                 <View style={styles.stopIconCol}>
                   {!isFirst && <View style={styles.connectorTop} />}
                   {isFirst ? (
-                    <MarkerOrigin width={30} height={30} color="#2563EB" />
+                    <MarkerOrigin width={30} height={30} fill="#2563EB" />
                   ) : isLast ? (
-                    <MarkerDestination width={35} height={35} color="#2563EB" />
+                    <MarkerDestination width={35} height={35} fill="#2563EB" />
                   ) : c.status === 'red' ? (
-                    <MarkerOrigin width={30} height={30} color="#EF4444" />
+                    <MarkerOrigin width={30} height={30} fill="#EF4444" />
                   ) : c.status === 'green' ? (
-                    <MarkerOrigin width={30} height={30} color="#10B981" />
+                    <MarkerOrigin width={30} height={30} fill="#10B981" />
                   ) : (
-                    <MarkerOrigin width={30} height={30} color="#C7C7CC" />
+                    <MarkerOrigin width={30} height={30} fill="#C7C7CC" />
                   )}
                   {!isLast && <View style={styles.connectorBottom} />}
                 </View>

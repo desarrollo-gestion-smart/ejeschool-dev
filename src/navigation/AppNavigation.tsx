@@ -7,8 +7,11 @@ import InitialLogins from '../screens/InitialLogins';
 import LoginFather from '../screens/Login/LoginFather';
 import LoginDriver from '../screens/Login/LoginDriver';
 import RegisterStudent from '../screens/RegisterStudent';
-import DashboardFather from '../screens/pages/father/components/DashboardFather';
-import ChatSupport from '../screens/pages/father/ChatSupport';
+import DashboardFather from '../screens/pages/father/components/dashboard/DashboardFather';
+import ChatSupport from '../screens/pages/father/ChatComponent';
+import Notifications from '../screens/pages/father/components/dashboard/Notificaciones';
+import MyAccount from '../screens/pages/father/components/dashboard/Myaccount';
+
 
 import PageDriver from '../screens/pages/PageDriver';
 import PageFather from '../screens/pages/father/PageFather';
@@ -33,6 +36,8 @@ export default function AppNavigator() {
         <Stack.Screen name="PageFather" component={PageFather} />
         <Stack.Screen name="DashboardFather" component={DashboardFather}  />
         <Stack.Screen name="ChatSupport" component={ChatSupport} />
+        <Stack.Screen name="Notifications" component={Notifications} />
+        <Stack.Screen name="MyAccount" component={MyAccount} />
       </Stack.Navigator>
     </NavigationContainer>
   );

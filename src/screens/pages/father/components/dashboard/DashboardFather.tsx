@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import MapFather from './map/MapFather';
-import ButtonContext from './map/ButtonContent';
-import routesData from '../../../../components/FooterRoutes/routesData'; // Ajusta la ruta según tu proyecto
+import MapFather from '../map/MapFather';
+import ButtonContext from '../map/ButtonContent';
+import routesData from '../../../../../components/FooterRoutes/routesData'; // Ajusta la ruta según tu proyecto
 
-import MarkerOrigin from '../../../../assets/marker-origin.svg';
-import VehicleSvg from '../../../../assets/vehicle.svg';
+import MarkerOrigin from '../../../../../assets/markers/marker-origin.svg';
+import VehicleSvg from '../../../../../assets/vehicle.svg';
 
-const CarIcon = () => <VehicleSvg width={90} height={90} />;
+const CarIcon = () => <VehicleSvg width={60} height={90} />;
 
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 
@@ -45,14 +45,15 @@ export default function CurrentTripDashboard() {
   // Simulamos distancia y tiempo (puedes calcularlo con MapViewDirections si quieres)
   const distance = '0.2 km';
   const duration = '2 min';
+  
 
   return (
     <View style={styles.container}>
       <MapFather pickup={pickup} dropoff={dropoff} />
 
       <View style={styles.bottomPanel}>
+       
         <View style={styles.rowCenter}>
-          
           {avatarUri ? (
             <Image source={{ uri: avatarUri }} style={styles.avatarSmall} />
           ) : null}
@@ -73,7 +74,7 @@ export default function CurrentTripDashboard() {
             style={styles.inlineIcon}
           />
           <Text style={styles.pickupAddress}>
-            {pickup.name || 'recogida en curso'}
+            {pickup?.Directions || 'recogida en curso'}
           </Text>
         </View>
 
@@ -105,6 +106,7 @@ export default function CurrentTripDashboard() {
 
         <ButtonContext onPress={() => console.log('Ruta cancelada')} />
       </View>
+     
     </View>
   );
 }
@@ -114,8 +116,8 @@ const styles = StyleSheet.create({
   bottomPanel: {
     position: 'absolute',
     marginHorizontal: 14,
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    paddingHorizontal: 12,
+    marginBottom: 10,
     bottom: 0,
     left: 0,
     right: 0,
@@ -130,8 +132,8 @@ const styles = StyleSheet.create({
   },
   avatarSmall: {
     left: 0,
-    width: 60,
-    height: 60,
+    width: 50,
+    height: 50,
     borderRadius: 30,
     marginRight: 10,
   },
@@ -147,12 +149,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#374151',
-    marginBottom: 12,
   },
   destinationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 18,
   },
   destinationText: {
     fontSize: 17,
@@ -160,7 +161,11 @@ const styles = StyleSheet.create({
     color: '#1F2937',
   },
   rowCenter: {
-    marginBottom: 20,
+    flex: 1,
+    backgroundColor: '#f7f7f7',
+    marginTop: 5,
+    marginBottom:17,
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'flex-start',
@@ -175,9 +180,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   infoLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#6B7280',
   },
+  
   chatButton: {
     position: 'absolute',
     top: 10,
@@ -191,10 +197,10 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   chatButtonText: { color: '#FFFFFF', fontSize: 18, fontWeight: '600' },
+ 
   infoValue: {
-    fontSize: 17,
+    fontSize: 13,
     fontWeight: 'bold',
     color: '#111827',
-    marginTop: 4,
   },
 });
