@@ -1,8 +1,9 @@
 import React from 'react';
-import { StyleSheet, View, TouchableOpacity, Image, Alert } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Image, Alert, Platform, PermissionsAndroid } from 'react-native';
 import MapView, { Marker, Region, PROVIDER_GOOGLE } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import Config from 'react-native-config';
+import Geolocation from '@react-native-community/geolocation';
 // import AppLayout from './layout/AppLayout';
 // import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MarkerOrigin from '../../assets/markers/marker-origin.svg';
@@ -74,7 +75,7 @@ export default function MapComponent({
   bottomContent,
   origin,
   destination,
-  driver,
+  driver: _driver,
   waypoints,
 }: Props) {
   const uberLightMapStyle = [
@@ -119,7 +120,8 @@ export default function MapComponent({
     latitudeDelta: 0.01,
     longitudeDelta: 0.01,
   };
-  const [region] = React.useState<Region>(initialRegion ?? fallback);
+  const [region] = React.useState<Region>(initialRegion ?? fallback);
+  const [userLocation, setUserLocation] = React.useState<Coordinate | null>(null);
 
 
   // Centra y ajusta el mapa para mostrar toda la ruta
@@ -150,11 +152,33 @@ export default function MapComponent({
 
 
   // Ajustar vista cuando cambia la ruta o sus coordenadas
-  React.useEffect(() => {
-    if (routeCoords.length > 1) {
-      setTimeout(() => fitToRoute(), 300);
-    }
-  }, [routeCoords, fitToRoute]);
+  React.useEffect(() => {
+    if (routeCoords.length > 1) {
+      setTimeout(() => fitToRoute(), 300);
+    }
+  }, [routeCoords, fitToRoute]);
+
+  React.useEffect(() => {
+    const init = async () => {
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) return;
+      } else {
+        Geolocation.requestAuthorization('whenInUse');
+      }
+      Geolocation.getCurrentPosition(
+        pos => {
+          const { latitude, longitude } = pos.coords;
+          const coord = { latitude, longitude };
+          setUserLocation(coord);
+          mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 600);
+        },
+        _err => {},
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+      );
+    };
+    init();
+  }, []);
 
   // MODIFICACIÓN CLAVE: Implementación de Geocodificación Inversa
   const applyRouteStops = React.useCallback(
@@ -210,17 +234,16 @@ export default function MapComponent({
     [],
   );
 
-  React.useEffect(() => {
-    const o = activeRoute.origin ?? origin;
-    const d = activeRoute.destination ?? destination;
-    const f = activeRoute.driver ?? driver;
-    const w = activeRoute.waypoints ?? waypoints;
-    if (!o || !d) {
-      setRouteCoords([]);
-      return;
-    }
-    setRouteCoords([o, ...(w ?? []), d]);
-  }, [activeRoute, origin, destination, waypoints]);
+  React.useEffect(() => {
+    const o = activeRoute.origin ?? origin;
+    const d = activeRoute.destination ?? destination;
+    const w = activeRoute.waypoints ?? waypoints;
+    if (!o || !d) {
+      setRouteCoords([]);
+      return;
+    }
+    setRouteCoords([o, ...(w ?? []), d]);
+  }, [activeRoute, origin, destination, waypoints]);
 
   return (
     <View style={styles.container}>
@@ -234,6 +257,18 @@ export default function MapComponent({
         provider={PROVIDER_GOOGLE}
         mapType="standard"
         customMapStyle={uberLightMapStyle}
+        showsUserLocation={true}
+        showsMyLocationButton={true}
+        onUserLocationChange={e => {
+          const { latitude, longitude } = (e && e.nativeEvent && e.nativeEvent.coordinate) || {};
+          if (typeof latitude === 'number' && typeof longitude === 'number') {
+            const coord = { latitude, longitude };
+            setUserLocation(coord);
+            if (isFollowing) {
+              mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 400);
+            }
+          }
+        }}
       >
                {' '}
         {markers.map(m => (
@@ -321,8 +356,15 @@ export default function MapComponent({
             if (isFollowing) {
               setIsFollowing(false);
             } else {
-              // Placeholder follow behavior
               setIsFollowing(true);
+              if (userLocation) {
+                mapRef.current?.animateToRegion({
+                  latitude: userLocation.latitude,
+                  longitude: userLocation.longitude,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                }, 400);
+              }
             }
           }}
         >

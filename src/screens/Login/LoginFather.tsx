@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import ResponsiveLogo from '../../components/ResponsiveLogo';
 import LogoSvg from '../../assets/logo-s.svg';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -30,13 +29,12 @@ type RootStackParamList = {
   RegisterStudent: undefined;
   PageFather: undefined;
 };
-
+export default function Login() {
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function LoginFather() {
   const navigation = useNavigation<LoginScreenNavigationProp>();
 
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const passwordRef = useRef<TextInput>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -44,7 +42,7 @@ export default function LoginFather() {
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Por favor, complete todos los campos');
-      return;
+      const res = await login({ email, password, role: 'parent' });
     }
     try {
       const res = await login({ email, password });
@@ -92,21 +90,16 @@ export default function LoginFather() {
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
               style={{ flex: 1 }}
             >
-              <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <ScrollView
-                  contentContainerStyle={{ flexGrow: 1 }}
-                  keyboardShouldPersistTaps="handled"
-                >
-                  <View style={styles.contentUp}>
-                    <View style={styles.LogoWrapper}>
-                    <ResponsiveLogo SvgComponent={LogoSvg} />
-                    </View>
-                  <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Iniciar Sesión</Text>
-                    <View style={styles.titleBar} />
                     <TextInput
+                      ref={passwordRef}
                       style={styles.input}
-                      placeholder="Email"
+                      placeholder="Contraseña"
+                      placeholderTextColor="#999"
+                      secureTextEntry
+                      value={password}
+                      onChangeText={setPassword}
+                      returnKeyType="done"
+                    />
                       placeholderTextColor="#999"
                       value={email}
                       onChangeText={setEmail}
@@ -207,27 +200,9 @@ const styles = StyleSheet.create({
   },cardTitle: {
     fontSize: 24,
     fontWeight: '900',
-    color: '#333',
-    marginBottom: 10,
   },
   titleBar: {
     width: 60,
-    height: 4,
-    backgroundColor: '#000',
-    marginBottom: 24,
-    borderRadius: 2,
-  },
-  input: {
-    width: '100%',
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    color: '#000',
-    backgroundColor: '#fff',
-    paddingHorizontal: 15,
-    marginBottom: 15,
-    fontSize: 16,
   },
   passwordContainer: {
     position: 'relative',

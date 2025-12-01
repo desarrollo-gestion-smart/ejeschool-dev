@@ -95,7 +95,6 @@ android {
         versionName "1.0"
         // Configure Google Maps API key via .env using react-native-config
         manifestPlaceholders += [ GOOGLE_MAPS_API_KEY: env.get("GOOGLE_MAPS_API_KEY") ?: "" ]
-        manifestPlaceholders += [ usesCleartextTraffic: "true" ]
     }
     signingConfigs {
         debug {
