@@ -279,7 +279,13 @@ export default function MapComponent({
             );
             return null;
           }
+
+          // queda pendiente revisar el porque no se estan uniendo las rutas de
+          //  origin destinatoin con los waaypoint y por que no se puede ver el
+          //  marker de conductor
           return (
+
+            
             <MapViewDirections
               origin={o}
               destination={d}
