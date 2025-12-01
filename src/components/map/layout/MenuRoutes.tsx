@@ -9,10 +9,10 @@ type Props = {
   animated?: boolean;
 };
 
-export default function BottomBar(props: Props) {
+export default function MenuRoutes(props: Props) {
   const insets = useSafeAreaInsets();
   const { vh } = useResponsive();
-  const FIXED_HEIGHT = vh(35) + insets.bottom;
+  const FIXED_HEIGHT = vh(42) + insets.bottom;
 
   return (
     <View style={[styles.container, { height: FIXED_HEIGHT }] }>
@@ -36,9 +36,7 @@ const styles = StyleSheet.create({
   },
   contentWrapper: {
     width: '100%',
-    paddingHorizontal: 16,
-    paddingTop: 6,
-    paddingBottom: 16,
+    paddingHorizontal: 12,
     flex: 1,
   }
 });

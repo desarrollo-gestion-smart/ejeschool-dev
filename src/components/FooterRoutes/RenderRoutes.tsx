@@ -9,7 +9,7 @@ import {
 import useResponsive from '../../types/useResponsive';
 // Importamos los tipos actualizados de routesData.ts (simulando que Coordinate tiene 'address')
 // Nota: 'Coordinate' debe ser exportado desde '../FooterRoutes/routesData'
-import { RouteData } from '../FooterRoutes/routesData';
+import { RouteData } from './routesData';
 // Definición de Coordinate con 'address' (asumiendo que viene de MapComponent)
 export type Coordinate = {
   latitude: number;
@@ -20,7 +20,7 @@ export type Coordinate = {
 };
 
 import VehicleIcon from '../../assets/vehicle.svg';
-import MarkerOrigin from '../../assets/markers/marker-origin.svg';
+import MarkerOrigin from '../../assets/markers/marker-origin-own.svg';
 import MarkerDestination from '../../assets/markers/marker-destination.svg';
 
 type Props = {
@@ -120,7 +120,7 @@ export default function RoutesMenu({
             <View style={styles.itemLeft}>
               <View style={styles.nameRow}>
                 <VehicleIcon
-                  width={50}
+                  width={0}
                   height={18}
                   fill="#6D28D9"
                   style={styles.vehicleIcon}
@@ -147,16 +147,17 @@ export default function RoutesMenu({
   const greens = selected.stops.filter(s => s.status === 'green').slice(0, 2);
   const routeStops = base.length >= 2 ? [base[0], ...reds, ...greens, base[base.length - 1]] : base;
   const perLeg = computePerLegMinutes(routeStops, totalMin);
+
   let remaining = totalMin;
 
   return (
-    <ScrollView showsVerticalScrollIndicator={true} contentContainerStyle={styles.detailsContent}>
+    <ScrollView showsVerticalScrollIndicator={true} contentContainerStyle={styles.container}>
       <>
         {routeStops.map((c, routeIdx) => {
           const isFirst = routeIdx === 0;
           const isLast = routeIdx === routeStops.length - 1;
           const stopTitle = isFirst
-            ? (selected.name || c.name || 'Origen')
+            ? (selected.students?.[routeIdx] || `Punto ${routeIdx + 1}`)
             : isLast
               ? (c.name || 'Destino')
               : (c.name || `Punto ${routeIdx + 1}`);
@@ -169,25 +170,34 @@ export default function RoutesMenu({
                 <View style={styles.stopIconCol}>
                   {!isFirst && <View style={styles.connectorTop} />}
                   {isFirst ? (
-                    <MarkerOrigin width={30} height={30} fill="#2563EB" />
+                    <MarkerOrigin width={22} height={22} fill="#2563EB" stroke="#fff" strokeWidth={2.5} />
                   ) : isLast ? (
-                    <MarkerDestination width={35} height={35} fill="#2563EB" />
+                    <MarkerDestination width={23} height={23} fill="#2563EB" color="#2563EB" />
                   ) : c.status === 'red' ? (
-                    <MarkerOrigin width={30} height={30} fill="#EF4444" />
+                    <MarkerOrigin width={22} height={22} fill="#EF4444" stroke="#fff" strokeWidth={2.5} />
                   ) : c.status === 'green' ? (
-                    <MarkerOrigin width={30} height={30} fill="#10B981" />
+                    <MarkerOrigin width={22} height={22} fill="#10B981" stroke="#fff" strokeWidth={2.5} />
                   ) : (
-                    <MarkerOrigin width={30} height={30} fill="#C7C7CC" />
+                    <MarkerOrigin width={22} height={22} fill="#000" stroke="#fff" strokeWidth={2.5} />
                   )}
                   {!isLast && <View style={styles.connectorBottom} />}
                 </View>
                 <View style={styles.stopTextCol}>
-                  <Text style={styles.stopTitle}>{stopTitle}</Text>
                   <Text style={styles.stopCoord}>
-                    {c.address || `${c.latitude.toFixed(5)}, ${c.longitude.toFixed(5)}`}
+                    {c.address || `${c.latitude.toFixed(3)}, ${c.longitude.toFixed(3)}`}
+                    
                   </Text>
+                  <Text style={styles.stopTitle}>{stopTitle}</Text>
+
                 </View>
               </View>
+                <View>
+                  </View>    
+
+
+
+
+
             </View>
           );
         })}
@@ -207,28 +217,26 @@ export default function RoutesMenu({
   );
 };
 
-  const headerTitle = selected ? selected.name : title;
+  const headerTitle = selected ? null : title;
 
   return (
     <View style={styles.container}>
-           {' '}
       <View style={styles.contentFrame}>
-               {' '}
         <View style={styles.headerRow}>
-                    <Text style={styles.title}>{headerTitle}</Text>       {' '}
+                    <Text style={styles.title}>{headerTitle}</Text>     
         </View>
-                {selected ? renderDetails() : renderList()}     {' '}
+                {selected ? renderDetails() : renderList()}     
       </View>
-         {' '}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+
     width: '100%',
     minHeight: 120,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
   },
   headerRow: {
     alignItems: 'center',
@@ -240,7 +248,7 @@ const styles = StyleSheet.create({
     color: '#1F1F1F',
   },
   list: {},
-  detailsContent: {},
+  detailsContent: {flex: 1,},
   item: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -258,7 +266,6 @@ const styles = StyleSheet.create({
 
   stopRow: {
     flexDirection: 'row',
-    paddingVertical: 3,
     borderBottomColor: '#F0F0F0',
   },
   stopLeft: { flexDirection: 'row', flex: 1, alignItems: 'center' },
@@ -268,24 +275,24 @@ const styles = StyleSheet.create({
     top: -12,
     height: 12,
     width: 1,
-    backgroundColor: '#6c6c6cff',
+    backgroundColor: '#DCDBDF',
   },
   connectorBottom: {
     position: 'absolute',
     bottom: -12,
     height: 12,
     width: 1,
-    backgroundColor: '#6c6c6cff',
+    backgroundColor: '#DCDBDF',
   },
-  stopTextCol: { marginLeft: 12 },
-  stopTitle: { fontSize: 15, fontWeight: '600', color: '#222' },
-  stopCoord: { fontSize: 11, color: '#888', marginTop: 4 },
+  stopTextCol: { marginLeft: 12, flex: 1 },
+  stopTitle: { fontSize: 14, fontWeight: '600', color: '#222', marginBottom: 4, paddingBottom: 5 },
+  stopCoord: { fontSize: 11, color: '#888',  },
 
-  finalizeButton: {
-    marginTop: 20,
+ finalizeButton: {
     backgroundColor: '#5d01bc',
-    paddingVertical: 14,
-    borderRadius: 12,
+    marginTop: 5,
+    paddingVertical: 7,
+    borderRadius: 8,
     alignItems: 'center',
   },
   finalizeButtonText: {

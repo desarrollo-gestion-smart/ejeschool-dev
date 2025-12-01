@@ -15,7 +15,7 @@ export default function TopBar({ title }: Props) {
     <View
       style={[
         styles.container,
-        { paddingTop: insets.top, height: 120 + insets.top },
+        { paddingTop: insets.top, height: 110 + insets.top },
       ]}
     >
       <Text style={styles.title}>{title || ''}</Text>
@@ -31,12 +31,10 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    zIndex: 10,
     backgroundColor: '#5702acff',
-    flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'flex-start',
-    paddingHorizontal: 16,
+    
   },
-  title: { color: '#FFFFFF', fontSize: 22, fontWeight: '700' },
+  title: { color: '#FFFFFF', fontSize: 24, fontWeight: '900', paddingHorizontal: 26, paddingVertical: 16 },
 });

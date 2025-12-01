@@ -6,8 +6,10 @@ import Config from 'react-native-config';
 // import AppLayout from './layout/AppLayout';
 // import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MarkerOrigin from '../../assets/markers/marker-origin.svg';
-import MarkerDestination from '../../assets/markers/marker-destination.svg';
+import MarkerDestination from '../../assets/markers/makerr-destination-own.svg';
 import type { Coordinate } from '../FooterRoutes/routesData';
+import MarkerMe from '../../assets/markers/waypoint.svg';
+
 
 
 type MarkerItem = {
@@ -15,17 +17,21 @@ type MarkerItem = {
   title: string;
   coordinate: Coordinate;
   type: 'origin' | 'destination' | 'waypoint';
+  status?: 'red' | 'green' | 'conductor'; 
+  nameRol?: string;
 };
 
 type Props = {
   markers?: MarkerItem[];
   initialRegion?: Region;
+  renderTopBar?: React.ReactNode;
   bottomContent?: (args: {
     collapsed: boolean;
     toggle: () => void;
     onRouteSelect: (stops: Coordinate[]) => void;
     onModeChange: (isDetails: boolean) => void;
   }) => React.ReactNode;
+  driver?: Coordinate;
   origin?: Coordinate;
   destination?: Coordinate;
   waypoints?: Coordinate[];
@@ -64,9 +70,11 @@ const getAddressFromCoordinates = async (latitude: number, longitude: number): P
 export default function MapComponent({
   markers = [],
   initialRegion,
+  renderTopBar,
   bottomContent,
   origin,
   destination,
+  driver,
   waypoints,
 }: Props) {
   const uberLightMapStyle = [
@@ -93,6 +101,7 @@ export default function MapComponent({
   const [activeRoute, setActiveRoute] = React.useState<{
     origin?: Coordinate;
     destination?: Coordinate;
+    driver?: Coordinate;
     waypoints?: Coordinate[];
   }>({});
   const [routeStopMarkers, setRouteStopMarkers] = React.useState<MarkerItem[]>([]);
@@ -100,7 +109,7 @@ export default function MapComponent({
   // details mode not used currently
   const [collapsed, setCollapsed] = React.useState(true);
   const [isFollowing, setIsFollowing] = React.useState(false);
-  const waypointColors = ['#F59E0B', '#3B82F6', '#10B981', '#EF4444'];
+  const waypointColors = ['#3B82F6', '#10B981', '#EF4444'];
   const googleApiKey = getMapsApiKey();
   // no defaultStops: map does not auto-initialize from routesData
 
@@ -204,6 +213,7 @@ export default function MapComponent({
   React.useEffect(() => {
     const o = activeRoute.origin ?? origin;
     const d = activeRoute.destination ?? destination;
+    const f = activeRoute.driver ?? driver;
     const w = activeRoute.waypoints ?? waypoints;
     if (!o || !d) {
       setRouteCoords([]);
@@ -214,7 +224,8 @@ export default function MapComponent({
 
   return (
     <View style={styles.container}>
-           {' '}
+      {renderTopBar ? <View style={styles.topOverlay}>{renderTopBar}</View> : null}
+           {' '}
       <MapView
         ref={mapRef}
         style={styles.map}
@@ -238,10 +249,13 @@ export default function MapComponent({
             onPress={() => setCollapsed(false)}
           >
             {marker.type === 'origin' ? (
-              <MarkerOrigin width={24} height={24} color="#00BFFF" />
+              <MarkerOrigin width={24} height={24} color="#2563EB" />
             ) : marker.type === 'destination' ? (
-              <MarkerDestination width={26} height={26} color="#FF3B30" />
-            ) : (
+              <MarkerDestination  width={30} height={50} fill="#2563EB" color="#2563EB" />
+            ) : marker.nameRol === 'conductor'  ?(
+              <MarkerMe width={22} height={22} fill="#000" />
+            )
+            :(
               <MarkerOrigin
                 width={22}
                 height={22}
@@ -272,13 +286,12 @@ export default function MapComponent({
               waypoints={w}
               apikey={googleKey as string}
               strokeWidth={5}
-              strokeColor="#000"
-              optimizeWaypoints={true}
+              strokeColor="#707070"
+              optimizeWaypoints
               mode="DRIVING"
               onReady={result => {
                 if (mapRef.current) {
                   mapRef.current.fitToCoordinates(result.coordinates, {
-                    edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
                     animated: true,
                   });
                 }
@@ -314,7 +327,6 @@ export default function MapComponent({
             }}
             style={styles.aimstyles}
           />
-               {' '}
         </TouchableOpacity>
         {bottomContent?.({
           collapsed,
@@ -329,18 +341,20 @@ export default function MapComponent({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  map: { flex: 1 },
-  mapFallback: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
+  container: { flex: 1 },
+  map: { flex: 1 },
+  topOverlay: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 40 },
+  mapFallback: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
   mapFallbackText: { color: '#333', backgroundColor: '#FFFFFFEE', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
   
   followButtonContainer: {
     width: '100%',
     position: 'absolute',
     bottom: 0,
-    paddingHorizontal: 10,
+    paddingHorizontal: 7  ,
     flexDirection: 'column',
     justifyContent: 'center',
+    zIndex: 50,
   },
   followButton: {
     alignSelf: 'flex-end',

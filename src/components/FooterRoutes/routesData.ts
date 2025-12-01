@@ -4,9 +4,10 @@
 export type Coordinate = { 
     latitude: number; 
     longitude: number; 
-    status?: 'red' | 'green'; 
+    status?: 'red' | 'green' ;
     name?: string; 
-    address?: string; // <--- The property needed for Geocoding Inversa
+    address?: string; 
+    nameRol?: string;
 };
 
 export type StudentInfo = {
@@ -28,14 +29,14 @@ export type RouteData = {
   students?: string[];
   stops: (Coordinate & { student?: string } & { Directions?: string })[];
   info?: StudentInfo[];
-
+  
 };
 
 
 // Rutas cortas y cercanas (todas en un radio de ~1.5 km - Centro de CABA)
 const conciseRoutes: RouteData[] = [
   {
-
+    
     id: 1,
     name: 'Ruta 1 ',
     vehicle: 'Bus 101',
@@ -57,10 +58,10 @@ const conciseRoutes: RouteData[] = [
       // Waypoint 2
       { latitude: -34.60180, longitude: -58.38040, Directions: 'Colegio NSR',  student: 'Sofía Martínez' },      
       // Destin
-      { latitude: -34.59970, longitude: -58.38115, Directions: 'Destino Final',  student: 'Mateo L.' }, 
+      { latitude: -34.59970, longitude: -58.38115, Directions: 'Destino Final',  student: 'Mateo L.', status: 'red' }, 
       // Puntos de Status (adicionales, no forzan la ruta)
-      { latitude: -34.60420, longitude: -58.38230, status: 'red', name: 'Conductor' },
-      { latitude: -34.60120, longitude: -58.38010, status: 'green', name: 'Punto de Interés' },
+      { latitude: -34.60420, longitude: -58.38230, status: 'red', name: 'Monica Santa Alcina', nameRol: 'Conductor' },
+      { latitude: -34.60120, longitude: -58.38010, status: 'green', name: 'Juan hernandes de la cruz', nameRol: 'Estudiante' },
     ],
   },
   {
@@ -84,8 +85,8 @@ const conciseRoutes: RouteData[] = [
       // Destino
       { latitude: -34.60270, longitude: -58.36440, name: 'Destino Madero' },
       // Puntos de Status (adicionales, no forzan la ruta)
-      { latitude: -34.59930, longitude: -58.36990, status: 'red', name: 'Conductor' },
-      { latitude: -34.60190, longitude: -58.36680, status: 'green', name: 'Punto de Interés' },
+      { latitude: -34.59930, longitude: -58.36990, status: 'red', name: 'Monica Santa Alcina', nameRol: 'Conductor' },
+      { latitude: -34.60190, longitude: -58.36680, status: 'green', name: 'Juan hernandes de la cruz', nameRol: 'Estudiante' },
     ],
   },
   {
@@ -111,8 +112,8 @@ const conciseRoutes: RouteData[] = [
       // Destino
       { latitude: -34.59895, longitude: -58.38730, name: 'Destino Derecho' },
       // Puntos de Status (adicionales, no forzan la ruta)
-      { latitude: -34.59740, longitude: -58.38850, status: 'red', name: 'Conductor' },
-      { latitude: -34.59840, longitude: -58.38650, status: 'green', name: 'Punto de Interés' },
+      { latitude: -34.59740, longitude: -58.38850, status: 'red', name: 'Monica Santa Alcina', nameRol: 'Conductor' },
+      { latitude: -34.59840, longitude: -58.38650, status: 'green', name: 'Juan hernandes de la cruz', nameRol: 'Estudiante' },
     ],
   },
   {
@@ -136,8 +137,8 @@ const conciseRoutes: RouteData[] = [
       { latitude: -34.60100, longitude: -58.38000, name: 'Corrientes y Esmeralda' }, 
       
       // Puntos de Status (adicionales)
-      { latitude: -34.60500, longitude: -58.37550, status: 'red', name: 'Conductor' },
-      { latitude: -34.60300, longitude: -58.37850, status: 'green', name: 'Punto de Interés' },
+      { latitude: -34.60500, longitude: -58.37550, status: 'red', name: 'Monica Santa Alcina', nameRol: 'Conductor' },
+      { latitude: -34.60300, longitude: -58.37850, status: 'green', name: 'Juan hernandes de la cruz', nameRol: 'Estudiante' },
     ],
   },
 ];

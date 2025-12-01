@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import TopBar from './TopBar';
-import BottomBar from './BottomBar';
+import MenuRoutes from './MenuRoutes';
 
   type Props = {
     title?: string;
@@ -25,12 +25,12 @@ import BottomBar from './BottomBar';
         {renderTopBar !== undefined ? renderTopBar : (title ? <TopBar title={title} /> : null)}
         <View style={styles.contentInner}>{children}</View>
         <View>
-          <BottomBar collapsed={collapsed} animated={animated}>
+          <MenuRoutes collapsed={collapsed} animated={animated}>
             {bottomContent?.({
               collapsed,
               toggle: () => setCollapsed(v => !v),
             })}
-          </BottomBar>
+          </MenuRoutes>
         </View>
       </SafeAreaView>
     );
