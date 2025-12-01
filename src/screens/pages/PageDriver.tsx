@@ -35,13 +35,13 @@ function PageDriver() {
     !isDetails ? (
       <>
         <TopBar title="Eje School" />
-        <View style={[styles.overlayCard, { top: insets.top + 24 }]}>
+        <View style={[styles.overlayCard, { top: insets.top + 90 }]}>
           <View style={styles.avatarCircle}>
             <Image source={{ uri: 'https://i.pravatar.cc/100?img=13' }} style={styles.avatarImg} />
           </View>
           <Text style={styles.nameText}>Gregory Smith</Text>
           <Text style={styles.subText}>Colegio NSR</Text>
-          <TouchableOpacity style={styles.smallButton}><Text style={styles.smallButtonText}>Seleccionar Colegio</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.buttontop}><Text style={styles.smallButtonText}>Seleccionar Colegio</Text></TouchableOpacity>
           <View style={styles.plateBox}><Text style={styles.plateText}>NZF-056</Text></View>
           <TouchableOpacity style={styles.smallButton}><Text style={styles.smallButtonText}>Seleccionar Vehículo</Text></TouchableOpacity>
         </View>
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     zIndex: 20,
     backgroundColor: '#fff',
     borderRadius: 8,
-    paddingVertical: 10,
+    paddingVertical: 7,
     paddingHorizontal: 10,
     alignItems: 'center',
     elevation: 8,
