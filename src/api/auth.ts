@@ -3,6 +3,7 @@ import api, { setAuthToken } from './base';
 export interface LoginRequest {
   email: string;
   password: string;
+  role?: 'parent' | 'driver' | 'admin';
 }
 
 export interface LoginResponse {

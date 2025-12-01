@@ -1,7 +1,8 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
+import Config from 'react-native-config';
 
 
-const BASE_URL = ''; 
+const BASE_URL = (Config as any)?.APP_URL || (Config as any)?.APP_url || '';
 
 const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -15,36 +16,33 @@ const api: AxiosInstance = axios.create({
 type MockUser = { id: string; name: string; email: string; role: 'admin' | 'parent' | 'driver'; password: string };
 const mockUsers: MockUser[] = [
   { id: '1', name: 'Admin', email: 'admin', role: 'admin', password: '123' },
-  
+  { id: '2', name: 'Driver', email: 'driver', role: 'driver', password: '123' },
 ];
 
 let currentToken: string | null = null;
 
-api.defaults.adapter = async (config) => {
-  const method = (config.method || 'get').toLowerCase();
-  const url = config.url || '';
-  const body = typeof config.data === 'string' ? JSON.parse(config.data || '{}') : (config.data || {});
+if (BASE_URL === '') {
+  api.defaults.adapter = async (config) => {
+    const method = (config.method || 'get').toLowerCase();
+    const url = config.url || '';
+    const body = typeof config.data === 'string' ? JSON.parse(config.data || '{}') : (config.data || {});
 
-  const makeResponse = (data: any, status = 200): AxiosResponse => ({
-    data,
-    status,
-    statusText: status === 200 ? 'OK' : 'ERROR',
-    headers: {},
-    config,
-  });
+    const makeResponse = (data: any, status = 200): AxiosResponse => ({
+      data,
+      status,
+      statusText: status === 200 ? 'OK' : 'ERROR',
+      headers: {},
+      config,
+    });
 
-  if (BASE_URL === '') {
     if (method === 'post' && url === '/auth/login') {
-      const { email, password, role } = body || {};
+      const { email, password } = body || {};
       const user = mockUsers.find(u => u.email === email);
       if (!user) {
         return makeResponse({ message: 'Usuario no existe' }, 401);
       }
       if (user.password !== password) {
         return makeResponse({ message: 'Credenciales inválidas' }, 401);
-      }
-      if (user.role !== role && user.role !== 'admin') {
-        return makeResponse({ message: 'Rol no autorizado' }, 403);
       }
       currentToken = `mock-token-${user.id}`;
       return makeResponse({ token: currentToken, user: { id: user.id, name: user.name, role: user.role } });
@@ -85,10 +83,8 @@ api.defaults.adapter = async (config) => {
     }
 
     return makeResponse({ message: 'Ruta no disponible en mock' }, 404);
-  }
-
-  throw new Error('Adapter sin implementación para BASE_URL real');
-};
+  };
+}
 
 api.interceptors.request.use(
   (config) => {
@@ -99,5 +95,9 @@ api.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+
+export const setAuthToken = (token: string | null) => {
+  currentToken = token;
+};
 
 export default api;
