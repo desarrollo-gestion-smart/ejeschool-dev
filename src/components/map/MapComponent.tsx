@@ -210,17 +210,16 @@ export default function MapComponent({
     [],
   );
 
-  React.useEffect(() => {
-    const o = activeRoute.origin ?? origin;
-    const d = activeRoute.destination ?? destination;
-    const f = activeRoute.driver ?? driver;
-    const w = activeRoute.waypoints ?? waypoints;
-    if (!o || !d) {
-      setRouteCoords([]);
-      return;
-    }
-    setRouteCoords([o, ...(w ?? []), d]);
-  }, [activeRoute, origin, destination, waypoints]);
+  React.useEffect(() => {
+    const o = activeRoute.origin ?? origin;
+    const d = activeRoute.destination ?? destination;
+    const w = activeRoute.waypoints ?? waypoints;
+    if (!o || !d) {
+      setRouteCoords([]);
+      return;
+    }
+    setRouteCoords([o, ...(w ?? []), d]);
+  }, [activeRoute, origin, destination, waypoints]);
 
   return (
     <View style={styles.container}>

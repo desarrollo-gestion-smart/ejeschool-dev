@@ -15,24 +15,28 @@ type Props = {
 
 const SvgIcon = ({ 
   component: SvgComponent, 
+  strokeWidth,
   size = 24, 
   stroke,
   color, 
-  style, 
+  style: svgStyle, 
   ...restProps   // ← esto recibe stroke, fill, strokeWidth, opacity, etc.
 }: Props) => {
 
   // Si pasas "color", lo aplicamos a fill y stroke (comodidad)
   const colorProps = color ? { fill: color } : {};
   const strokeProps = stroke ? { stroke: stroke } : {};
+  const strokeWidthProps = strokeWidth ? { strokeWidth: strokeWidth } : {};
   return (
     <SvgComponent
       stroke={stroke}
+      strokeWidth={strokeWidth}
       width={size}
       height={size}
-      style={[{ width: size, height: size }, style]}
+      style={[{ width: size, height: size }, svgStyle]}
       {...colorProps}
       {...strokeProps}
+      {...strokeWidthProps}
       {...restProps}   // ← aquí llegan stroke="#fff", strokeWidth={3}, etc.
     />
   );

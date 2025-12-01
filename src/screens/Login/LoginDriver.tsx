@@ -29,8 +29,7 @@ import { login } from '../../api/auth';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 type RootStackParamList = {
-  
-  PageDriver: undefined;
+  vehicleVerification: undefined;
 };
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -56,7 +55,7 @@ export default function LoginDriver() {
       console.log('LoginDriver response', res);
       const token = (res as any)?.api_token || (res as any)?.token;
       if (token) {
-        navigation.replace('PageDriver');
+        navigation.replace('vehicleVerification');
       } else {
         Alert.alert('Login', 'Respuesta sin token');
       }

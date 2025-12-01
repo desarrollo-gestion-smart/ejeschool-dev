@@ -12,7 +12,7 @@ type Props = {
 export default function MenuRoutes(props: Props) {
   const insets = useSafeAreaInsets();
   const { vh } = useResponsive();
-  const FIXED_HEIGHT = vh(42) + insets.bottom;
+  const FIXED_HEIGHT = vh(40) + insets.bottom;
 
   return (
     <View style={[styles.container, { height: FIXED_HEIGHT }] }>

@@ -20,6 +20,7 @@ import Notifications from '../screens/pages/father/components/dashboard/Notifica
 import MyAccount from '../screens/pages/father/components/dashboard/Myaccount';
 import Historias from '../screens/pages/father/components/dashboard/Historias';
 import Paymethod from '../screens/pages/father/components/dashboard/Paymethod';
+import vehicleVerification from '../screens/pages/driver/components/VehicleVerification';
 
 
 
@@ -32,7 +33,7 @@ export default function AppNavigator() {
         initialRouteName="InitialLogins"
         screenOptions={{ headerShown: false }}
       >
-
+                <Stack.Screen name="vehicleVerification" component={vehicleVerification} />
         <Stack.Screen name="InitialLogins" component={InitialLogins} />  
 
         <Stack.Screen name="LoginFather" component={LoginFather} />

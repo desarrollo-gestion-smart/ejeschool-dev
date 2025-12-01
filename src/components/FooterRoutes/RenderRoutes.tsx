@@ -233,14 +233,14 @@ export default function RoutesMenu({
 
 const styles = StyleSheet.create({
   container: {
-
     width: '100%',
-    minHeight: 120,
-    backgroundColor: 'transparent',
   },
   headerRow: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#F6F6F6',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 16,
   },
   title: {
     fontSize: 17,

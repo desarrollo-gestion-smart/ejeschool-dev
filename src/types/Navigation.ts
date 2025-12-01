@@ -11,4 +11,5 @@ export type RootStackParamList = {
   MyAccount: undefined;
   Historias: undefined;
   Paymethod: undefined;
+  vehicleVerification: undefined;
 };
