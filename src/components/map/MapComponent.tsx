@@ -3,6 +3,7 @@ import { StyleSheet, View, TouchableOpacity, Image, Alert, Platform, Permissions
 import MapView, { Marker, Region, PROVIDER_GOOGLE } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import Config from 'react-native-config';
+import { fetchLatestPosition } from '../../api/traccar';
 import Geolocation from '@react-native-community/geolocation';
 // import AppLayout from './layout/AppLayout';
 // import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -112,7 +113,7 @@ export default function MapComponent({
   const [isFollowing, setIsFollowing] = React.useState(false);
   const waypointColors = ['#3B82F6', '#10B981', '#EF4444'];
   const googleApiKey = getMapsApiKey();
-  // no defaultStops: map does not auto-initialize from routesData
+  // no defaultStops: map does not auto-initialize from routesData
 
   const fallback: Region = {
     latitude: -34.6037,
@@ -122,6 +123,20 @@ export default function MapComponent({
   };
   const [region] = React.useState<Region>(initialRegion ?? fallback);
   const [userLocation, setUserLocation] = React.useState<Coordinate | null>(null);
+  const [driverLive, setDriverLive] = React.useState<Coordinate | null>(null);
+  const deviceIdRef = React.useRef<string | null>(
+    ((Config as any)?.TRACCAR_DEVICE_ID || (Config as any)?.TRACCAR_device_id || null) as any
+  );
+  const hasInitialCenterRef = React.useRef(false);
+  const [directionsErrorNotified, setDirectionsErrorNotified] = React.useState(false);
+
+  const directionsData = React.useMemo(() => {
+    const googleKey = googleApiKey || (Config as any).GOOGLE_MAPS_API_KEY;
+    const o = activeRoute.origin ?? origin;
+    const d = activeRoute.destination ?? destination;
+    const w = activeRoute.waypoints ?? waypoints;
+    return { googleKey, o, d, w };
+  }, [googleApiKey, activeRoute, origin, destination, waypoints]);
 
 
   // Centra y ajusta el mapa para mostrar toda la ruta
@@ -164,7 +179,7 @@ export default function MapComponent({
         const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) return;
       } else {
-        Geolocation.requestAuthorization('whenInUse');
+        Geolocation.requestAuthorization();
       }
       Geolocation.getCurrentPosition(
         pos => {
@@ -179,6 +194,44 @@ export default function MapComponent({
     };
     init();
   }, []);
+
+  React.useEffect(() => {
+    const deviceId = deviceIdRef.current;
+    if (!deviceId) return;
+    let mounted = true;
+    const pull = async () => {
+      try {
+        const pos = await fetchLatestPosition(deviceId);
+        if (pos && mounted) {
+          setDriverLive({ latitude: pos.latitude, longitude: pos.longitude });
+        }
+      } catch {}
+    };
+    pull();
+    const t = setInterval(pull, 5000);
+    return () => { mounted = false; clearInterval(t); };
+  }, []);
+
+  React.useEffect(() => {
+    if (directionsData.o && directionsData.d && !directionsData.googleKey && !directionsErrorNotified) {
+      setDirectionsErrorNotified(true);
+      Alert.alert('Ruta', 'falla en la implementacion para trazar direcciones');
+    }
+  }, [directionsData, directionsErrorNotified]);
+
+  React.useEffect(() => {
+    if (isFollowing) {
+      const c = driverLive || userLocation;
+      if (c) {
+        mapRef.current?.animateToRegion({
+          latitude: c.latitude,
+          longitude: c.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        }, 400);
+      }
+    }
+  }, [isFollowing, driverLive, userLocation]);
 
   // MODIFICACIÓN CLAVE: Implementación de Geocodificación Inversa
   const applyRouteStops = React.useCallback(
@@ -264,7 +317,10 @@ export default function MapComponent({
           if (typeof latitude === 'number' && typeof longitude === 'number') {
             const coord = { latitude, longitude };
             setUserLocation(coord);
-            if (isFollowing) {
+            if (!hasInitialCenterRef.current) {
+              hasInitialCenterRef.current = true;
+              mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 400);
+            } else if (isFollowing) {
               mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 400);
             }
           }
@@ -274,6 +330,11 @@ export default function MapComponent({
         {markers.map(m => (
           <Marker key={m.id} coordinate={m.coordinate} title={m.title} />
         ))}
+        {driverLive && (
+          <Marker coordinate={driverLive} anchor={{ x: 0.5, y: 0.5 }}>
+            <MarkerMe width={22} height={22} fill="#000" />
+          </Marker>
+        )}
         {routeStopMarkers.map((marker, idx) => (
           <Marker
             key={marker.id}
@@ -301,51 +362,31 @@ export default function MapComponent({
             )}
           </Marker>
         ))}
-        {(() => {
-          const googleKey = googleApiKey || (Config as any).GOOGLE_MAPS_API_KEY;
-          const o = activeRoute.origin ?? origin;
-          const d = activeRoute.destination ?? destination;
-          const w = activeRoute.waypoints ?? waypoints;
-          if (!(o && d)) return null;
-          if (!googleKey) {
-            Alert.alert(
-              'Ruta',
-              'falla en la implementacion para trazar direcciones',
-            );
-            return null;
-          }
-
-          // queda pendiente revisar el porque no se estan uniendo las rutas de
-          //  origin destinatoin con los waaypoint y por que no se puede ver el
-          //  marker de conductor
-          return (
-
-            
-            <MapViewDirections
-              origin={o}
-              destination={d}
-              waypoints={w}
-              apikey={googleKey as string}
-              strokeWidth={5}
-              strokeColor="#707070"
-              optimizeWaypoints
-              mode="DRIVING"
-              onReady={result => {
-                if (mapRef.current) {
-                  mapRef.current.fitToCoordinates(result.coordinates, {
-                    animated: true,
-                  });
-                }
-              }}
-              onError={_errorMessage => {
-                Alert.alert(
-                  'Ruta',
-                  'No se pudo trazar la ruta con Google Directions',
-                );
-              }}
-            />
-          );
-        })()}
+        {directionsData.o && directionsData.d && directionsData.googleKey ? (
+          <MapViewDirections
+            origin={directionsData.o}
+            destination={directionsData.d}
+            waypoints={directionsData.w}
+            apikey={directionsData.googleKey as string}
+            strokeWidth={5}
+            strokeColor="#707070"
+            optimizeWaypoints
+            mode="DRIVING"
+            onReady={result => {
+              if (mapRef.current) {
+                mapRef.current.fitToCoordinates(result.coordinates, {
+                  animated: true,
+                });
+              }
+            }}
+            onError={_errorMessage => {
+              Alert.alert(
+                'Ruta',
+                'No se pudo trazar la ruta con Google Directions',
+              );
+            }}
+          />
+        ) : null}
              {' '}
       </MapView>
            
