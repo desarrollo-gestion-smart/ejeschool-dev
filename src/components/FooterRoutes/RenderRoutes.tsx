@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import useResponsive from '../../types/useResponsive';
 // Importamos los tipos actualizados de routesData.ts (simulando que Coordinate tiene 'address')
 // Nota: 'Coordinate' debe ser exportado desde '../FooterRoutes/routesData'
 import { RouteData } from './routesData';
@@ -39,7 +38,6 @@ export default function RoutesMenu({
   onRouteSelect,
   onModeChange,
 }: Props) {
-  const {} = useResponsive();
   const [selected, setSelected] = React.useState<RouteData | null>(null);
 
   React.useEffect(() => {
@@ -222,10 +220,10 @@ export default function RoutesMenu({
   return (
     <View style={styles.container}>
       <View style={styles.contentFrame}>
-        <View style={styles.headerRow}>
-                    <Text style={styles.title}>{headerTitle}</Text>     
-        </View>
-                {selected ? renderDetails() : renderList()}     
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>{headerTitle}</Text>
+      </View>
+      {selected ? renderDetails() : renderList()}
       </View>
     </View>
   );

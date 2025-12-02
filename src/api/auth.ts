@@ -32,6 +32,8 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   const payload = response.data;
   const token = extractToken(payload);
   setAuthToken(token);
+  const masked = token ? `${String(token).slice(0, 6)}...${String(token).slice(-4)}` : null;
+  console.log('auth.login token', masked);
   return { ...payload, api_token: token ?? payload?.api_token, token: token ?? payload?.token } as LoginResponse;
 };
 

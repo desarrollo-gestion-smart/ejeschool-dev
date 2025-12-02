@@ -24,6 +24,7 @@ import Schoolsvg from '../../assets/school.svg';
 // Responsive logo y assets
 // (importados arriba)
 import { login } from '../../api/auth';
+import { getAuthToken } from '../../api/base';
 
 // Nuevo API - Solo esto necesitamos
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -56,6 +57,10 @@ export default function LoginDriver() {
       console.log('LoginDriver response', res);
       const token = (res as any)?.api_token || (res as any)?.token;
       if (token) {
+        const masked = `${String(token).slice(0, 6)}...${String(token).slice(-4)}`;
+        const stored = getAuthToken();
+        const maskedStored = stored ? `${String(stored).slice(0, 6)}...${String(stored).slice(-4)}` : null;
+        console.log('LoginDriver token', { received: masked, stored: maskedStored });
         navigation.replace('PageDriver');
       } else {
         Alert.alert('Login', 'Respuesta sin token');
