@@ -29,10 +29,10 @@ type DriverStackNavigationProps = StackNavigationProp<
 // -------------------------------------
 
 const VEHICLES = [
-  { id: '1', label: 'Bus 01 - ABC 123' },
-  { id: '2', label: 'Bus 02 - DEF 456' },
-  { id: '3', label: 'Van 01 - GHI 789' },
-  { id: '4', label: 'Van 02 - JKL 012' },
+  { id: '1', label: 'chevrolet Silverado' },
+  { id: '2', label: 'Ford EcoSport' },
+  { id: '3', label: 'Fiat 100' },
+  { id: '4', label: 'Renault Oroch ' },
 ];
 
 export default function VehicleVerificationScreen() {
@@ -47,34 +47,25 @@ export default function VehicleVerificationScreen() {
   const inputRef = useRef<TextInput>(null);
 
   const handleVerify = async () => {
-    if (!selectedVehicle === true) {
-      Alert.alert(
-        'Debes seleccionar un vehículo para verificar',
-      );
+    if (!selectedVehicle) {
+      Alert.alert('Debes seleccionar un vehículo para verificar');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      console.log(`Validando vehículo: ${selectedVehicle} `);
-
-      await new Promise(resolve => setTimeout(() => resolve(undefined), 2000));
-
+      console.log(`Validando vehículo: ${selectedVehicle}`);
       navigation.replace('PageDriver');
     } catch (error) {
       console.error('Error de validación:', error);
-      Alert.alert(
-        'Error de Verificación',
-        'El vehículo seleccionado no es válido. Intente de nuevo.',
-      );
-      setCode('');
+      Alert.alert('Error de Verificación', 'Intente de nuevo');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const isButtonDisabled = !selectedVehicle || code.length < 6 || isLoading;
+  const isButtonDisabled = !selectedVehicle || isLoading;
 
   return (
     <View
@@ -121,9 +112,7 @@ export default function VehicleVerificationScreen() {
                   style={styles.listItem}
                   onPress={() => {
                     setSelectedVehicle(item.label);
-                    setCode('');
                     setListOpen(false);
-                    inputRef.current?.focus();
                   }}
                 >
                   <Text style={styles.vehicleText}>{item.label}</Text>

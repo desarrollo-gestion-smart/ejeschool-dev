@@ -31,6 +31,7 @@ export const logout = async (): Promise<void> => {
   setAuthToken(null);
 };
 
+
 export interface RegisterRequest {
   name: string;
   email: string;

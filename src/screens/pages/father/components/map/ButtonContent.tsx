@@ -9,7 +9,7 @@ type Props = {
 export default function CancelRouteButton({ onPress }: Props) {
   return (
     <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.8}>
-      <Text style={styles.text}>Cancelar Ruta</Text>
+      <Text style={styles.text}>Cancelar Recogida</Text>
     </TouchableOpacity>
   );
 }

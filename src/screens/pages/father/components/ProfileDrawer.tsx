@@ -36,7 +36,6 @@ export default function ProfileDrawer({
   onClose,
   userName = 'Larry Davis',
   userPhoto,
-  vehiclePlate = 'SDF-5221',
   onLogout,
 }: Props) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -112,7 +111,6 @@ export default function ProfileDrawer({
                   </TouchableOpacity>
                   <Text style={styles.headerName}>{userName}</Text>
                   <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{vehiclePlate}</Text>
                   </View>
                 </View>
               </View>
