@@ -1,6 +1,6 @@
 // screens/EjeSchoolScreen.tsx
 import React from 'react';
-import { View, StyleSheet, Image, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Image, Text, TouchableOpacity, BackHandler, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapComponent from '../../components/map/MapComponent';
 import TopBar from '../../components/map/layout/TopBar';
@@ -30,6 +30,23 @@ const renderBottomFactory = (setIsDetails: (v: boolean) => void) =>
 function PageDriver() {
   const insets = useSafeAreaInsets();
   const [isDetails, setIsDetails] = React.useState(false);
+
+  React.useEffect(() => {
+    const onBackPress = () => {
+      Alert.alert(
+        'Salir',
+        '¿Deseas salir de la aplicación?',
+        [
+          { text: 'Quedarme', style: 'cancel' },
+          { text: 'Salir', style: 'destructive', onPress: () => BackHandler.exitApp() },
+        ],
+        { cancelable: true }
+      );
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, []);
 
   const TopBarWithCard = (
     !isDetails ? (

@@ -110,7 +110,7 @@ export default function MapComponent({
   // details mode not used currently
   const [collapsed, setCollapsed] = React.useState(true);
   const [isFollowing, setIsFollowing] = React.useState(false);
-  const waypointColors = ['#3B82F6', '#10B981', '#EF4444'];
+  const waypointColors = [ '#10B981', '#EF4444'];
   const googleApiKey = getMapsApiKey();
   // no defaultStops: map does not auto-initialize from routesData
 
@@ -164,7 +164,7 @@ export default function MapComponent({
         const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) return;
       } else {
-        Geolocation.requestAuthorization('whenInUse');
+        Geolocation.requestAuthorization();
       }
       Geolocation.getCurrentPosition(
         pos => {
@@ -204,9 +204,9 @@ export default function MapComponent({
 
       const enrichedStops = await Promise.all(geocodingPromises);
       
-      // 2. Separar puntos de la ruta y puntos de status (para MapViewDirections vs Markers)
-      const primaryRouteStops = enrichedStops.filter(s => !s.status);
-      const extraStops = enrichedStops.filter(s => !!s.status);
+      // 2. Separar puntos de la ruta principal (sin nameRol) y puntos extra (con nameRol)
+      const primaryRouteStops = enrichedStops.filter(s => !s.nameRol);
+      const extraStops = enrichedStops.filter(s => !!s.nameRol);
 
       if (primaryRouteStops.length < 2) {
           // Esto puede ocurrir si todos los puntos tienen status, lo cual no es una ruta válida.
@@ -217,18 +217,21 @@ export default function MapComponent({
       }
       
       const originStop = primaryRouteStops[0];
-      const destinationStop = primaryRouteStops[primaryRouteStops.length - 1];
-      const wp = primaryRouteStops.slice(1, primaryRouteStops.length - 1);
+      const destinationStop = primaryRouteStops[primaryRouteStops.length - 1];
+      // Waypoints: solo intermedios de la ruta principal
+      const combinedWaypoints = [
+        ...primaryRouteStops.slice(1, primaryRouteStops.length - 1),
+      ];
+      // Google Directions limita a ~23 waypoints; recortamos si excede
+      const wp = combinedWaypoints.slice(0, 23);
 
-      setActiveRoute({ origin: originStop, destination: destinationStop, waypoints: wp });
+      setActiveRoute({ origin: originStop, destination: destinationStop, waypoints: wp });
 
-      const nextMarkers: MarkerItem[] = [
-        { id: 1, title: originStop.name || originStop.address || 'Origen', coordinate: originStop, type: 'origin' },
-        ...wp.map((c, i) => ({ id: 100 + i, title: c.name || c.address || `Punto ${i + 1}`, coordinate: c, type: 'waypoint' as const })),
-        { id: 2, title: destinationStop.name || destinationStop.address || 'Destino', coordinate: destinationStop, type: 'destination' },
-        // Incluir markers de status enriquecidos (si los hay)
-        ...extraStops.map((c, i) => ({ id: 200 + i, title: c.name || c.address || (c.status === 'red' ? 'Conductor' : 'Punto'), coordinate: c, type: 'waypoint' as const })),
-      ];
+      const nextMarkers: MarkerItem[] = [
+        { id: 1, title: originStop.name || originStop.address || 'Origen', coordinate: originStop, type: 'origin' },
+        ...wp.map((c, i) => ({ id: 100 + i, title: c.name || c.address || `Punto ${i + 1}`, coordinate: c, type: 'waypoint' as const })),
+        { id: 2, title: destinationStop.name || destinationStop.address || 'Destino', coordinate: destinationStop, type: 'destination' },
+      ];
       setRouteStopMarkers(nextMarkers);
     },
     [],
@@ -248,7 +251,6 @@ export default function MapComponent({
   return (
     <View style={styles.container}>
       {renderTopBar ? <View style={styles.topOverlay}>{renderTopBar}</View> : null}
-           {' '}
       <MapView
         ref={mapRef}
         style={styles.map}
@@ -258,7 +260,6 @@ export default function MapComponent({
         mapType="standard"
         customMapStyle={uberLightMapStyle}
         showsUserLocation={true}
-        showsMyLocationButton={true}
         onUserLocationChange={e => {
           const { latitude, longitude } = (e && e.nativeEvent && e.nativeEvent.coordinate) || {};
           if (typeof latitude === 'number' && typeof longitude === 'number') {
@@ -270,7 +271,6 @@ export default function MapComponent({
           }
         }}
       >
-               {' '}
         {markers.map(m => (
           <Marker key={m.id} coordinate={m.coordinate} title={m.title} />
         ))}
@@ -281,7 +281,6 @@ export default function MapComponent({
             title={marker.title}
             anchor={{ x: 0.5, y: 0.5 }}
             tracksViewChanges={false}
-            onPress={() => setCollapsed(false)}
           >
             {marker.type === 'origin' ? (
               <MarkerOrigin width={24} height={24} color="#2563EB" />
@@ -294,9 +293,7 @@ export default function MapComponent({
               <MarkerOrigin
                 width={22}
                 height={22}
-                color={
-                  waypointColors[Math.max(0, (idx - 1) % waypointColors.length)]
-                }
+                color={marker.coordinate.status === 'green' ? '#10B981' : '#EF4444'}
               />
             )}
           </Marker>
@@ -328,7 +325,6 @@ export default function MapComponent({
               apikey={googleKey as string}
               strokeWidth={5}
               strokeColor="#707070"
-              optimizeWaypoints
               mode="DRIVING"
               onReady={result => {
                 if (mapRef.current) {
@@ -368,7 +364,6 @@ export default function MapComponent({
             }
           }}
         >
-                 {' '}
           <Image
             source={{
               uri: 'https://img.icons8.com/?size=100&id=zydjAKYE3RWr&format=png&color=000000',
@@ -399,7 +394,6 @@ const styles = StyleSheet.create({
     width: '100%',
     position: 'absolute',
     bottom: 0,
-    paddingHorizontal: 7  ,
     flexDirection: 'column',
     justifyContent: 'center',
     zIndex: 50,
@@ -416,7 +410,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     marginBottom: 8,
   },
-  aimstyles: { width: 28, height: 28, tintColor: '#000' },
+  aimstyles: { width: 28, height: 28, tintColor: '#707070' },
   reportsButtonContainer: { position: 'absolute', zIndex: 30 },
   reportsButton: { backgroundColor: '#6D28D9', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8 },
   reportsButtonText: { color: '#fff', fontSize: 12, fontWeight: '600' },

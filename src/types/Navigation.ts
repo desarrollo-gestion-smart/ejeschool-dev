@@ -6,10 +6,13 @@ export type RootStackParamList = {
   PageDriver: undefined;
   PageFather: undefined;
   DashboardFather: undefined;
-  ChatSupport: undefined;
+  ChatSupport: {
+    userRole: 'padre' | 'conductor';
+    recipientName: string;
+    recipientAvatar?: string;
+  };
   Notifications: undefined;
   MyAccount: undefined;
   Historias: undefined;
-  Paymethod: undefined;
   vehicleVerification: undefined;
 };

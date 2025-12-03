@@ -16,12 +16,15 @@ import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import MarkerDestination from '../../../../../assets/markers/marker-destination.svg'; // Asegúrate de tener este SVG
 import MarkerOrigin from '../../../../../assets/markers/marker-origin.svg';
 import ProfileDrawer from '../ProfileDrawer';
+import { logout } from '../../../../../api/auth';
 import Lessthen from '../../../../../assets/icons/lessthen.svg';
 import CloseIcon from '../../../../../assets/icons/close.svg';
 
 type Props = {
   pickup: { latitude: number; longitude: number; name?: string };
   dropoff: { latitude: number; longitude: number; name?: string };
+  previous?: { latitude: number; longitude: number; name?: string };
+  driver?: { latitude: number; longitude: number; name?: string };
   distance?: string;
   duration?: string;
 };
@@ -50,7 +53,7 @@ const uberLightMapStyle = [
     { featureType: 'administrative', elementType: 'geometry', stylers: [{ visibility: 'off' }] },
 ]
 
-export default function MapFather({ pickup, dropoff, distance: _distance, duration: _duration }: Props) {
+export default function MapFather({ pickup, dropoff, previous, driver, distance: _distance, duration: _duration }: Props) {
   const mapRef = useRef<MapView>(null);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'PageFather'>>();
   const onPress = () => navigation.navigate('PageFather');
@@ -65,12 +68,15 @@ export default function MapFather({ pickup, dropoff, distance: _distance, durati
 
   useEffect(() => {
     setTimeout(() => {
-      mapRef.current?.fitToCoordinates([pickup, dropoff], {
+      const pts = [pickup, dropoff];
+      if (previous) pts.push(previous);
+      if (driver) pts.push(driver);
+      mapRef.current?.fitToCoordinates(pts, {
         edgePadding: { top: 180, left: 80, bottom: 280, right: 80 },
         animated: true,
       });
     }, 500);
-  }, [pickup, dropoff]);
+  }, [pickup, dropoff, previous, driver]);
 
   const apiKey = getMapsApiKey();
 
@@ -89,23 +95,38 @@ export default function MapFather({ pickup, dropoff, distance: _distance, durati
         provider={PROVIDER_GOOGLE}
         customMapStyle={uberLightMapStyle}
       >
-        {/* Marcador de Recogida - Verde */}
         <Marker coordinate={pickup} anchor={{ x: 0.5, y: 1 }}>
           <View style={styles.pickupCircle}>
             <MarkerOrigin width={32} height={32} fill="#10B981" />
           </View>
         </Marker>
 
+        {previous ? (
+          <Marker coordinate={previous} anchor={{ x: 0.5, y: 1 }}>
+            <View style={styles.pickupCircle}>
+              <MarkerOrigin width={32} height={32} fill="#EF4444" />
+            </View>
+          </Marker>
+        ) : null}
+
+        {driver ? (
+          <Marker coordinate={driver} anchor={{ x: 0.5, y: 1 }}>
+            <View style={styles.pickupCircle}>
+              <MarkerOrigin width={32} height={32} fill="#5d01bc" />
+            </View>
+          </Marker>
+        ) : null}
+
         {/* Marcador de Destino - Pin rojo clásico */}  
         <Marker coordinate={dropoff} anchor={{ x: 0.5, y: 1 }}>
           <MarkerDestination width={40} height={40} fill="#2641dcff" />
         </Marker>
 
-        {/* Línea de ruta */}
         {apiKey ? (
           <MapViewDirections
-            origin={pickup}
+            origin={driver || pickup}
             destination={dropoff}
+            waypoints={(previous ? [previous] : []).concat([pickup])}
             apikey={apiKey}
             strokeWidth={5}
             strokeColor="#5d01bc"
@@ -119,15 +140,20 @@ export default function MapFather({ pickup, dropoff, distance: _distance, durati
           />
         ) : null}
       </MapView>
-       {profileOpen && (
-              <ProfileDrawer
-                visible={profileOpen}
-                onClose={() => setProfileOpen(false)}
-                onLogout={() => navigation.reset({ index: 0, routes: [{ name: 'InitialLogins' }] })}
-                userName="Larry Davis"
-                vehiclePlate="SDF-5221"
-              />
-            )}
+      {profileOpen && (
+        <ProfileDrawer
+          visible={profileOpen}
+          onClose={() => setProfileOpen(false)}
+          onLogout={async () => {
+            try {
+              await logout();
+            } catch {}
+            navigation.reset({ index: 0, routes: [{ name: 'InitialLogins' }] });
+          }}
+          userName="Larry Davis"
+          vehiclePlate="SDF-5221"
+        />
+      )}
     </View>
   );
 }

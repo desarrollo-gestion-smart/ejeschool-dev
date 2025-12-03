@@ -18,8 +18,7 @@ import DashboardFather from '../screens/pages/father/components/dashboard/Dashbo
 import ChatSupport from '../screens/pages/father/ChatComponent';
 import Notifications from '../screens/pages/father/components/dashboard/Notificaciones';
 import MyAccount from '../screens/pages/father/components/dashboard/Myaccount';
-import Historias from '../screens/pages/father/components/dashboard/Historias';
-import Paymethod from '../screens/pages/father/components/dashboard/Paymethod';
+import Historias from '../screens/pages/father/components/dashboard/TripsHistory';
 import vehicleVerification from '../screens/pages/driver/components/VehicleVerification';
 
 
@@ -47,7 +46,6 @@ export default function AppNavigator() {
         <Stack.Screen name="Notifications" component={Notifications} />
         <Stack.Screen name="MyAccount" component={MyAccount} />
         <Stack.Screen name="Historias" component={Historias} />
-        <Stack.Screen name="Paymethod" component={Paymethod} />
       </Stack.Navigator>
     </NavigationContainer>
   );

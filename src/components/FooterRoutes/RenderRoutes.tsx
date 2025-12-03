@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import useResponsive from '../../types/useResponsive';
+import Config from 'react-native-config';
 // Importamos los tipos actualizados de routesData.ts (simulando que Coordinate tiene 'address')
 // Nota: 'Coordinate' debe ser exportado desde '../FooterRoutes/routesData'
 import { RouteData } from './routesData';
@@ -41,6 +42,7 @@ export default function RoutesMenu({
 }: Props) {
   const {} = useResponsive();
   const [selected, setSelected] = React.useState<RouteData | null>(null);
+  const [addressMap, setAddressMap] = React.useState<Record<string, string>>({});
 
   React.useEffect(() => {
     if (!selected && _collapsed) onToggle?.();
@@ -51,6 +53,29 @@ export default function RoutesMenu({
     const m = String(time).match(/(\d+(?:\.\d+)?)\s*min/i);
     return m ? Math.round(Number(m[1])) : 0;
   };
+
+  const getMapsApiKey = (): string => {
+    return (Config as any)?.GOOGLE_MAPS_API_KEY || (Config as any)?.Maps_API_KEY || '';
+  };
+
+  const getAddressFromCoordinates = React.useCallback(async (latitude: number, longitude: number): Promise<string> => {
+    const apiKey = getMapsApiKey();
+    if (!apiKey) return '';
+    try {
+      const resp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`);
+      const data = await resp.json();
+      if (data.status === 'OK' && data.results?.length > 0) {
+        const comps = Array.isArray(data.results[0].address_components) ? data.results[0].address_components : [];
+        const route = String((comps.find((c: any) => (c.types || []).includes('route'))?.long_name) || '').trim();
+        const number = String((comps.find((c: any) => (c.types || []).includes('street_number'))?.long_name) || '').trim();
+        const out = `${route}${route && number ? ' ' : ''}${number}`.trim();
+        return out;
+      }
+      return '';
+    } catch {
+      return '';
+    }
+  }, []);
 
   const deg2rad = (deg: number) => deg * (Math.PI / 180);
   const haversineKm = (a: Coordinate, b: Coordinate): number => {
@@ -90,10 +115,7 @@ export default function RoutesMenu({
   };
 
   const renderList = () => (
-    <ScrollView
-      contentContainerStyle={styles.list}
-      showsVerticalScrollIndicator={true}
-    >
+    <ScrollView style={styles.scroll} showsVerticalScrollIndicator={true}>
       <View>
         {routes.map(r => (
           <TouchableOpacity
@@ -102,18 +124,7 @@ export default function RoutesMenu({
             onPress={() => {
               setSelected(r);
               onModeChange?.(true);
-              const base = (r.stops || []).filter(s => !s.status);
-              const reds = (r.stops || [])
-                .filter(s => s.status === 'red')
-                .slice(0, 2);
-              const greens = (r.stops || [])
-                .filter(s => s.status === 'green')
-                .slice(0, 2);
-              const ordered =
-                base.length >= 2
-                  ? [base[0], ...reds, ...greens, base[base.length - 1]]
-                  : base;
-              onRouteSelect?.(ordered);
+              onRouteSelect?.(r.stops || []);
               if (_collapsed) onToggle?.();
             }}
           >
@@ -131,7 +142,6 @@ export default function RoutesMenu({
             </View>
             <View style={styles.itemRight}>
               <Text style={styles.itemTime}>{r.time}</Text>
-              <Text style={styles.itemType}>{r.type}</Text>
             </View>
           </TouchableOpacity>
         ))}
@@ -139,23 +149,58 @@ export default function RoutesMenu({
     </ScrollView>
   );
 
+  const orderedStops = React.useMemo(() => {
+    if (!selected) return [] as Coordinate[];
+    return selected.stops;
+  }, [selected]);
+
+  React.useEffect(() => {
+    const run = async () => {
+      if (!selected || orderedStops.length === 0) return;
+      const pairs = await Promise.all(
+        orderedStops.map(async (c, idx) => {
+          const addr = await getAddressFromCoordinates(c.latitude, c.longitude);
+          const fallback = c.address ? String(c.address).split(',')[0].trim() : '';
+          return [`${selected.id}-${idx}`, addr || fallback];
+        })
+      );
+      const next: Record<string, string> = {};
+      for (const [k, v] of pairs) {
+        if (v) next[k as string] = v as string;
+      }
+      setAddressMap(prev => ({ ...prev, ...next }));
+    };
+    run();
+  }, [selected, orderedStops, getAddressFromCoordinates]);
+
   const renderDetails = () => {
   if (!selected) return null;
   const totalMin = parseMinutes(selected.time);
-  const base = selected.stops.filter(s => !s.status);
-  const reds = selected.stops.filter(s => s.status === 'red').slice(0, 2);
-  const greens = selected.stops.filter(s => s.status === 'green').slice(0, 2);
-  const routeStops = base.length >= 2 ? [base[0], ...reds, ...greens, base[base.length - 1]] : base;
-  const perLeg = computePerLegMinutes(routeStops, totalMin);
+  const perLeg = computePerLegMinutes(orderedStops, totalMin);
 
   let remaining = totalMin;
 
   return (
-    <ScrollView showsVerticalScrollIndicator={true} contentContainerStyle={styles.container}>
-      <>
-        {routeStops.map((c, routeIdx) => {
+    <ScrollView
+      showsVerticalScrollIndicator={true}
+      style={styles.detailsScroll}
+      stickyHeaderIndices={[4]}
+    >
+      <View style={styles.detailsHeader}>
+        <TouchableOpacity
+          style={styles.finalizeButton}
+          onPress={() => {
+            onRouteSelect?.([]);
+            setSelected(null);
+            onModeChange?.(false);
+          }}
+        >
+          <Text style={styles.finalizeButtonText}>Finalizar ruta</Text>
+        </TouchableOpacity>
+      </View>
+        {orderedStops.map((c, routeIdx) => {
           const isFirst = routeIdx === 0;
-          const isLast = routeIdx === routeStops.length - 1;
+          const isLast = routeIdx === orderedStops.length - 1;
           const stopTitle = isFirst
             ? (selected.students?.[routeIdx] || `Punto ${routeIdx + 1}`)
             : isLast
@@ -173,26 +218,21 @@ export default function RoutesMenu({
                     <MarkerOrigin width={22} height={22} fill="#2563EB" stroke="#fff" strokeWidth={2.5} />
                   ) : isLast ? (
                     <MarkerDestination width={23} height={23} fill="#2563EB" color="#2563EB" />
-                  ) : c.status === 'red' ? (
-                    <MarkerOrigin width={22} height={22} fill="#EF4444" stroke="#fff" strokeWidth={2.5} />
                   ) : c.status === 'green' ? (
                     <MarkerOrigin width={22} height={22} fill="#10B981" stroke="#fff" strokeWidth={2.5} />
                   ) : (
-                    <MarkerOrigin width={22} height={22} fill="#000" stroke="#fff" strokeWidth={2.5} />
+                    <MarkerOrigin width={22} height={22} fill="#EF4444" stroke="#fff" strokeWidth={2.5} />
                   )}
                   {!isLast && <View style={styles.connectorBottom} />}
                 </View>
                 <View style={styles.stopTextCol}>
                   <Text style={styles.stopCoord}>
-                    {c.address || `${c.latitude.toFixed(3)}, ${c.longitude.toFixed(3)}`}
-                    
+                    {addressMap[`${selected.id}-${routeIdx}`] || c.address || ''}
                   </Text>
                   <Text style={styles.stopTitle}>{stopTitle}</Text>
 
                 </View>
               </View>
-                <View>
-                  </View>    
 
 
 
@@ -201,18 +241,6 @@ export default function RoutesMenu({
             </View>
           );
         })}
-
-        <TouchableOpacity
-          style={styles.finalizeButton}
-          onPress={() => {
-            onRouteSelect?.([]);
-            setSelected(null);
-            onModeChange?.(false);
-          }}
-        >
-          <Text style={styles.finalizeButtonText}>Finalizar ruta</Text>
-        </TouchableOpacity>
-      </>
     </ScrollView>
   );
 };
@@ -221,7 +249,7 @@ export default function RoutesMenu({
 
   return (
     <View style={styles.container}>
-      <View style={styles.contentFrame}>
+      <View style={styles.contentFrame} >
         <View style={styles.headerRow}>
                     <Text style={styles.title}>{headerTitle}</Text>     
         </View>
@@ -235,12 +263,13 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
   },
+  scroll: { flex: 1 },
   headerRow: {
     backgroundColor: '#F6F6F6',
     alignItems: 'flex-start',
     justifyContent: 'flex-start',
     paddingHorizontal: 12,
-    paddingVertical: 16,
+    paddingVertical: 7,
   },
   title: {
     fontSize: 17,
@@ -248,7 +277,8 @@ const styles = StyleSheet.create({
     color: '#1F1F1F',
   },
   list: {},
-  detailsContent: {flex: 1,},
+  detailsScroll: { flex: 1 },
+  detailsHeader: { backgroundColor: '#FFFFFF', paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4 },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -288,9 +318,9 @@ const styles = StyleSheet.create({
   stopTitle: { fontSize: 14, fontWeight: '600', color: '#222', marginBottom: 4, paddingBottom: 5 },
   stopCoord: { fontSize: 11, color: '#888',  },
 
- finalizeButton: {
+  finalizeButton: {
     backgroundColor: '#5d01bc',
-    marginTop: 5,
+    marginTop: 0,
     paddingVertical: 7,
     borderRadius: 8,
     alignItems: 'center',

@@ -60,7 +60,7 @@ export default function ProfileDrawer({
     };
     const onSettings = () => {
       onClose();
-      navigation.navigate('Paymethod');
+      // navigation.navigate();
     };
   //   const menuItems = [
   //     { icon: 'Home', label: 'Inicio', action: () => onNavigate('Home') },

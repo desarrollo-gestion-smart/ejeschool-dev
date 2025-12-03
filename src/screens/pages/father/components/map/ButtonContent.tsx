@@ -4,12 +4,16 @@ import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 
 type Props = {
   onPress: () => void;
+  status?: 'boarded' | 'not_boarded';
+  label?: string;
 };
 
-export default function CancelRouteButton({ onPress }: Props) {
+export default function CancelRouteButton({ onPress, status, label }: Props) {
+  const bg = status === 'boarded' ? '#10B981' : status === 'not_boarded' ? '#EF4444' : '#242e42';
+  const textLabel = label ?? (status === 'boarded' ? 'Abordo' : status === 'not_boarded' ? 'No abordo' : 'Cancelar Recogida');
   return (
-    <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.8}>
-      <Text style={styles.text}>Cancelar Recogida</Text>
+    <TouchableOpacity style={[styles.button, { backgroundColor: bg }]} onPress={onPress} activeOpacity={0.8}>
+      <Text style={styles.text}>{textLabel}</Text>
     </TouchableOpacity>
   );
 }

@@ -6,6 +6,7 @@ import {
   Image,
   TouchableOpacity,
   FlatList,
+  BackHandler,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native'; 
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -118,6 +119,12 @@ const EjeSchoolComponent: React.FC = () => {
     
     console.log('Abrir modal/pantalla para agregar estudiante.');
   };
+
+  React.useEffect(() => {
+    const blockBack = () => true; // permanecer en PageFather, sin salir ni retroceder
+    const sub = BackHandler.addEventListener('hardwareBackPress', blockBack);
+    return () => sub.remove();
+  }, []);
 
   return (
     <View style={styles.container}>
