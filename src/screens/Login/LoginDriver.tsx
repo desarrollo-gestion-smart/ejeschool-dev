@@ -29,7 +29,8 @@ import { login } from '../../api/auth';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 type RootStackParamList = {
-  vehicleVerification: undefined;
+  
+  PageDriver: undefined;
 };
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -53,12 +54,7 @@ export default function LoginDriver() {
       console.log('LoginDriver request', { endpoint: '/auth/login', email, password: '***' });
       const res = await login({ email, password });
       console.log('LoginDriver response', res);
-      const token = (res as any)?.api_token || (res as any)?.token;
-      if (token) {
-        navigation.replace('vehicleVerification');
-      } else {
-        Alert.alert('Login', 'Respuesta sin token');
-      }
+      navigation.replace('PageDriver');
     } catch (e: any) {
       console.log('LoginDriver error', e?.response?.data || e);
       Alert.alert('Login fallido', e?.response?.data?.message || 'Error de autenticación');
