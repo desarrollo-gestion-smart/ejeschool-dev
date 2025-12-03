@@ -1,11 +1,11 @@
 import api, { setAuthToken } from './base';
-import * as FileSystem from 'expo-file-system';
-
+import * as FileSystem from 'expo-file-system/legacy';
+//@ts-ignore
 const SESSION_PATH = `${FileSystem.documentDirectory || ''}session.json`;
 
-const saveSession = async (token: string | null, role?: 'parent' | 'driver' | 'admin') => {
+const saveSession = async (token: string | null, role?: 'parent' | 'driver' | 'admin', user?: any) => {
   try {
-    const data = JSON.stringify({ token, role });
+    const data = JSON.stringify({ token, role, user });
     if (SESSION_PATH) {
       await FileSystem.writeAsStringAsync(SESSION_PATH, data);
     }
@@ -53,7 +53,7 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   const token = extractToken(payload);
   setAuthToken(token);
   const role = (data.role as any) ?? (payload?.user?.role as any);
-  await saveSession(token, role);
+  await saveSession(token, role, payload?.user ?? payload);
   const masked = token ? `${String(token).slice(0, 6)}...${String(token).slice(-4)}` : null;
   console.log('auth.login token', masked);
   return { ...payload, api_token: token ?? payload?.api_token, token: token ?? payload?.token } as LoginResponse;

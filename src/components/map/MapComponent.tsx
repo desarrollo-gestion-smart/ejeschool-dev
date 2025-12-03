@@ -338,7 +338,6 @@ export default function MapComponent({
       setActiveRoute({ origin: originStop, destination: destinationStop, waypoints: wp });
 
       const nextMarkers: MarkerItem[] = [
-        { id: 1, title: originStop.name || originStop.address || 'Origen', coordinate: originStop, type: 'origin' },
         ...wp.map((c, i) => ({ id: 100 + i, title: c.name || c.address || `Punto ${i + 1}`, coordinate: c, type: 'waypoint' as const })),
         { id: 2, title: destinationStop.name || destinationStop.address || 'Destino', coordinate: destinationStop, type: 'destination' },
         ...extraStops.map((c, i) => ({ id: 200 + i, title: c.name || c.address || (c.status === 'red' ? 'Conductor' : 'Punto'), coordinate: c, type: 'waypoint' as const })),
@@ -404,8 +403,8 @@ export default function MapComponent({
           <Marker key={m.id} coordinate={m.coordinate} title={m.title} />
         ))}
 
-        {userLocation && (
-          <Marker coordinate={userLocation as Coordinate} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
+        {(_driver ?? userLocation) && (
+          <Marker coordinate={(_driver ?? userLocation) as Coordinate} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
             <Image source={CarSport} style={[styles.carMarker, driverIconColor ? { tintColor: driverIconColor } : null]} />
           </Marker>
         )}

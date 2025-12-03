@@ -2,14 +2,14 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import type { RootStackParamList } from '../types/navigation';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { setAuthToken } from '../api/base';
 
 import InitialLogins from '../screens/InitialLogins';
 
 //Driver 
 import LoginDriver from '../screens/Login/LoginDriver';
-import PageDriver from '../screens/pages/PageDriver';
+import PageDriver from '../screens/pages/driver/PageDriver';
 
 
 //father 
