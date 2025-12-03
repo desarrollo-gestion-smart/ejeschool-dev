@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import useResponsive from '../../../types/useResponsive';
 
 type Props = {
   children?: React.ReactNode;
@@ -11,8 +10,7 @@ type Props = {
 
 export default function MenuRoutes(props: Props) {
   const insets = useSafeAreaInsets();
-  const { vh } = useResponsive();
-  const FIXED_HEIGHT = vh(40) + insets.bottom;
+  const FIXED_HEIGHT = Math.round(Dimensions.get('window').height * 0.42) + insets.bottom;
 
   return (
     <View style={[styles.container, { height: FIXED_HEIGHT }] }>

@@ -100,4 +100,6 @@ export const setAuthToken = (token: string | null) => {
   currentToken = token;
 };
 
+export const getAuthToken = (): string | null => currentToken;
+
 export default api;
