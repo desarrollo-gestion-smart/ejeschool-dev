@@ -3,13 +3,14 @@ import React, { useEffect, useRef } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../../../../types/Navigation';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Platform, PermissionsAndroid } from 'react-native';
 import Config from 'react-native-config';
 
 
 //mapas
 import MapViewDirections from 'react-native-maps-directions';
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+import Geolocation from '@react-native-community/geolocation';
 
 
 //iconos
@@ -58,6 +59,7 @@ export default function MapFather({ pickup, dropoff, previous, driver, distance:
   const navigation = useNavigation<StackNavigationProp<RootStackParamList, 'PageFather'>>();
   const onPress = () => navigation.navigate('PageFather');
   const [profileOpen, setProfileOpen] = React.useState(false);
+  const [userLocation, setUserLocation] = React.useState<{ latitude: number; longitude: number } | null>(null);
 
   const initialRegion: Region = {
     latitude: (pickup.latitude + dropoff.latitude) / 2,
@@ -71,12 +73,33 @@ export default function MapFather({ pickup, dropoff, previous, driver, distance:
       const pts = [pickup, dropoff];
       if (previous) pts.push(previous);
       if (driver) pts.push(driver);
+      if (userLocation) pts.push(userLocation);
       mapRef.current?.fitToCoordinates(pts, {
         edgePadding: { top: 180, left: 80, bottom: 280, right: 80 },
         animated: true,
       });
     }, 500);
-  }, [pickup, dropoff, previous, driver]);
+  }, [pickup, dropoff, previous, driver, userLocation]);
+
+  useEffect(() => {
+    const init = async () => {
+      if (Platform.OS === 'android') {
+        const res = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
+        if (res !== PermissionsAndroid.RESULTS.GRANTED) return;
+      } else {
+        Geolocation.requestAuthorization();
+      }
+      Geolocation.getCurrentPosition(
+        pos => {
+          const { latitude, longitude } = pos.coords;
+          setUserLocation({ latitude, longitude });
+        },
+        () => {},
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+      );
+    };
+    init();
+  }, []);
 
   const apiKey = getMapsApiKey();
 
@@ -94,6 +117,7 @@ export default function MapFather({ pickup, dropoff, previous, driver, distance:
         initialRegion={initialRegion}
         provider={PROVIDER_GOOGLE}
         customMapStyle={uberLightMapStyle}
+        showsUserLocation
       >
         <Marker coordinate={pickup} anchor={{ x: 0.5, y: 1 }}>
           <View style={styles.pickupCircle}>
@@ -124,7 +148,7 @@ export default function MapFather({ pickup, dropoff, previous, driver, distance:
 
         {apiKey ? (
           <MapViewDirections
-            origin={driver || pickup}
+            origin={userLocation || driver || pickup}
             destination={dropoff}
             waypoints={(previous ? [previous] : []).concat([pickup])}
             apikey={apiKey}

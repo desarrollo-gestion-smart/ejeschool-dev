@@ -433,15 +433,15 @@ export default function MapComponent({
           </Marker>
         ))}
 
-        {directionsData.o && directionsData.d && directionsData.googleKey ? (
+        {(userLocation || directionsData.o) && directionsData.d && directionsData.googleKey ? (
           <MapViewDirections
-            origin={directionsData.o}
+            origin={userLocation ?? directionsData.o}
             destination={directionsData.d}
             waypoints={directionsData.w}
             apikey={directionsData.googleKey as string}
             strokeWidth={5}
             strokeColor="#707070"
-            optimizeWaypoints
+            resetOnChange={false}
             mode="DRIVING"
             onReady={() => {}}
             onError={_errorMessage => {

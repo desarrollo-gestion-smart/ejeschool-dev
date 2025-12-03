@@ -12,7 +12,6 @@ const CarIcon = () => <VehicleSvg width={60} height={90} />;
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import Config from 'react-native-config';
 import { fetchDriverProfile, fetchStudentProfile } from '../../../../../api/driver';
-
 type RootParams = {
   DashboardFather: { studentName?: string; avatarUri?: string };
 };

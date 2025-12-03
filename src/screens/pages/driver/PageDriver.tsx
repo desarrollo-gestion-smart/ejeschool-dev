@@ -24,6 +24,7 @@ import { routes } from '../../../components/FooterRoutes/routesData';
 import api, { getAuthToken } from '../../../api/base';
 import { logout } from '../../../api/auth';
 import VehicleListModal from './components/VehicleListModal';
+import { useNavigation } from '@react-navigation/native';
 
 // Ruta del session.json (la misma que usas en auth.ts)
 const SESSION_PATH = `${FileSystem.documentDirectory}session.json`;
@@ -37,6 +38,7 @@ type BottomArgs = {
 
 function PageDriver() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
   const [isDetails, setIsDetails] = React.useState(false);
 
   // ESTADO DEL USUARIO (nombre + avatar)
@@ -234,7 +236,7 @@ function PageDriver() {
               <Text style={styles.exitCloseText}>×</Text>
             </TouchableOpacity>
             <Text style={styles.exitTitle}>¿Qué deseas hacer?</Text>
-            <TouchableOpacity style={styles.exitPrimary} onPress={async () => { await logout(); setExitOpen(false); }}>
+            <TouchableOpacity style={styles.exitPrimary} onPress={async () => { await logout(); setExitOpen(false); navigation.reset({ index: 0, routes: [{ name: 'InitialLogins' }] }); }}>
               <Text style={styles.exitPrimaryText}>Cerrar sesión</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.exitSecondary} onPress={() => BackHandler.exitApp()}>
@@ -293,7 +295,7 @@ const styles = StyleSheet.create({
   },
   avatarImg: { width: 58, height: 65, borderRadius: 28 },
   nameText: { fontSize: 18, fontWeight: '700', color: '#1F1F1F' },
-  subText: { fontSize: 13, color: '#666', marginTop: 2, marginBottom: 10 },
+  subText: { fontSize: 13, color: '#666', marginTop: 2, marginBottom: 2 },
   smallButton: {
     alignSelf: 'center',
     backgroundColor: '#5E00BC',

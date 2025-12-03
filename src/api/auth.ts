@@ -60,7 +60,9 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
 };
 
 export const logout = async (): Promise<void> => {
-  await api.post('/auth/logout');
+  try {
+    await api.post('/auth/logout');
+  } catch {}
   setAuthToken(null);
   await clearSession();
 };
