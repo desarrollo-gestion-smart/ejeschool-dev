@@ -49,7 +49,7 @@ export default function LoginFather() {
     }
     setIsLoading(true);
     try {
-      const res = await login({ email, password });
+      const res = await login({ email, password, role: 'parent' });
       const role = (res as any)?.user?.role;
       if (role === 'parent' || role === 'admin') {
         navigation.replace('PageFather');

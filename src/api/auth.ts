@@ -1,4 +1,24 @@
 import api, { setAuthToken } from './base';
+import * as FileSystem from 'expo-file-system';
+
+const SESSION_PATH = `${FileSystem.documentDirectory || ''}session.json`;
+
+const saveSession = async (token: string | null, role?: 'parent' | 'driver' | 'admin') => {
+  try {
+    const data = JSON.stringify({ token, role });
+    if (SESSION_PATH) {
+      await FileSystem.writeAsStringAsync(SESSION_PATH, data);
+    }
+  } catch {}
+};
+
+const clearSession = async () => {
+  try {
+    if (SESSION_PATH) {
+      await FileSystem.deleteAsync(SESSION_PATH, { idempotent: true } as any);
+    }
+  } catch {}
+};
 
 export interface LoginRequest {
   email: string;
@@ -32,6 +52,8 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   const payload = response.data;
   const token = extractToken(payload);
   setAuthToken(token);
+  const role = (data.role as any) ?? (payload?.user?.role as any);
+  await saveSession(token, role);
   const masked = token ? `${String(token).slice(0, 6)}...${String(token).slice(-4)}` : null;
   console.log('auth.login token', masked);
   return { ...payload, api_token: token ?? payload?.api_token, token: token ?? payload?.token } as LoginResponse;
@@ -40,6 +62,7 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
 export const logout = async (): Promise<void> => {
   await api.post('/auth/logout');
   setAuthToken(null);
+  await clearSession();
 };
 
 

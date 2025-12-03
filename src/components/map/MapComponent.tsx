@@ -217,75 +217,66 @@ export default function MapComponent({
         _err => { console.log('MapComponent getCurrentPosition error', _err); },
         { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
       );
-      setTimeout(() => {
-        if (!userLocationRef.current) {
-          Geolocation.getCurrentPosition(
-            pos => {
-              console.log('MapComponent getCurrentPosition fallback', pos?.coords);
-              const { latitude, longitude } = pos.coords;
-              const coord = { latitude, longitude };
-              setUserLocation(coord);
-              userLocationRef.current = coord;
-              setShowUserDot(false);
-              if (!hasInitialCenterRef.current) {
-                hasInitialCenterRef.current = true;
-                mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 600);
-              }
-            },
-            e => { console.log('MapComponent fallback error', e); },
-            { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
-          );
-        }
-      }, 6000);
     };
     init();
   }, []);
 
-  // Escucha la ubicación siempre
+  const isRouteActive = React.useMemo(() => {
+    const o = activeRoute.origin ?? origin;
+    const d = activeRoute.destination ?? destination;
+    return !!(o && d);
+  }, [activeRoute, origin, destination]);
+
   React.useEffect(() => {
-    const watchId = Geolocation.watchPosition(
-      pos => {
-        console.log('MapComponent watchPosition', pos?.coords);
-        const { latitude, longitude } = pos.coords;
-          const coord = { latitude, longitude };
-          setUserLocation(coord);
-          userLocationRef.current = coord;
-          setShowUserDot(false);
-        if (!hasInitialCenterRef.current) {
-          hasInitialCenterRef.current = true;
-          mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 600);
-        }
-      },
-      _err => { console.log('MapComponent watchPosition error', _err); },
-      { enableHighAccuracy: true, distanceFilter: 0, interval: 3000 }
-    );
+    let watchId: any = null;
+    let intervalId: any = null;
+        // @ts-ignore
+    const updateFromPosition = (pos: Geolocation.GeoPosition) => {
+      const { latitude, longitude } = pos.coords as any;
+      const coord = { latitude, longitude };
+      setUserLocation(coord);
+      userLocationRef.current = coord;
+      setShowUserDot(false);
+      if (!hasInitialCenterRef.current) {
+        hasInitialCenterRef.current = true;
+        mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 600);
+      }
+    };
+
+    const startLowFrequency = () => {
+      Geolocation.getCurrentPosition(
+        p => updateFromPosition(p as any),
+        e => console.log('MapComponent low-frequency error', e),
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+      );
+      intervalId = setInterval(() => {
+        Geolocation.getCurrentPosition(
+          p => updateFromPosition(p as any),
+          e => console.log('MapComponent low-frequency interval error', e),
+          { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+        );
+      }, 600000);
+    };
+
+    const startHighFrequency = () => {
+      watchId = Geolocation.watchPosition(
+        p => updateFromPosition(p as any),
+        e => console.log('MapComponent high-frequency watch error', e),
+        { enableHighAccuracy: true, distanceFilter: 0, interval: 3000 }
+      );
+    };
+
+    if (isRouteActive) {
+      startHighFrequency();
+    } else {
+      startLowFrequency();
+    }
 
     return () => {
-      Geolocation.clearWatch(watchId);
+      if (watchId !== null) Geolocation.clearWatch(watchId);
+      if (intervalId !== null) clearInterval(intervalId as any);
     };
-  }, []);
-
-  // Pull adicional
-    React.useEffect(() => {
-      let mounted = true;
-      const pull = () => {
-        Geolocation.getCurrentPosition(
-          pos => {
-            if (!mounted) return;
-            console.log('MapComponent polling getCurrentPosition', pos?.coords);
-          const { latitude, longitude } = pos.coords;
-          setUserLocation({ latitude, longitude });
-          userLocationRef.current = { latitude, longitude };
-          setShowUserDot(false);
-          },
-          _err => { console.log('MapComponent polling error', _err); },
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-        );
-      };
-      pull();
-      const t = setInterval(pull, 4000);
-      return () => { mounted = false; clearInterval(t); };
-    }, []);
+  }, [isRouteActive]);
 
   React.useEffect(() => {}, [driverDeviceId]);
 

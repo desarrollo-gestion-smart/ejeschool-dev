@@ -1,7 +1,9 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
+import React from 'react';
 import type { RootStackParamList } from '../types/navigation';
+import * as FileSystem from 'expo-file-system';
+import { setAuthToken } from '../api/base';
 
 import InitialLogins from '../screens/InitialLogins';
 
@@ -26,10 +28,39 @@ import vehicleVerification from '../screens/pages/driver/components/VehicleVerif
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
+  const [ready, setReady] = React.useState(false);
+  const [initial, setInitial] = React.useState<keyof RootStackParamList>('InitialLogins');
+
+  React.useEffect(() => {
+    const init = async () => {
+      try {
+          // @ts-ignore
+        const path = `${FileSystem.documentDirectory || ''}session.json`;
+        const exists = path ? await FileSystem.getInfoAsync(path) : { exists: false };
+        if ((exists as any)?.exists) {
+          const raw = await FileSystem.readAsStringAsync(path);
+          const obj = JSON.parse(raw || '{}');
+          const token = obj?.token;
+          const role = obj?.role as ('driver' | 'parent' | 'admin' | undefined);
+          if (token) {
+            setAuthToken(token);
+            if (role === 'driver') setInitial('PageDriver');
+            else if (role === 'parent' || role === 'admin') setInitial('PageFather');
+            else setInitial('InitialLogins');
+          }
+        }
+      } catch {}
+      setReady(true);
+    };
+    init();
+  }, []);
+
+  if (!ready) return null;
+
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="InitialLogins"
+        initialRouteName={initial}
         screenOptions={{ headerShown: false }}
       >
                 <Stack.Screen name="vehicleVerification" component={vehicleVerification} />

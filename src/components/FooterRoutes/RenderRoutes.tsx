@@ -19,7 +19,7 @@ export type Coordinate = {
   address?: string; // <- CLAVE: Permite recibir la dirección
 };
 
-import VehicleIcon from '../../assets/vehicle.svg';
+import VehicleIcon from '../../assets/icons/car-black.svg';
 import MarkerOrigin from '../../assets/markers/marker-origin-own.svg';
 import MarkerDestination from '../../assets/markers/marker-destination.svg';
 
@@ -113,8 +113,9 @@ export default function RoutesMenu({
   };
 
   const renderList = () => (
-    <ScrollView style={styles.scroll} showsVerticalScrollIndicator={true}>
-      <View>
+    <ScrollView style={styles.detailsScroll}
+    contentContainerStyle={{ paddingBottom: 20 }}
+    showsVerticalScrollIndicator={true}>
         {routes.map(r => (
           <TouchableOpacity
             key={r.id}
@@ -129,7 +130,7 @@ export default function RoutesMenu({
             <View style={styles.itemLeft}>
               <View style={styles.nameRow}>
                 <VehicleIcon
-                  width={0}
+                  width={52}
                   height={18}
                   fill="#6D28D9"
                   style={styles.vehicleIcon}
@@ -143,7 +144,6 @@ export default function RoutesMenu({
             </View>
           </TouchableOpacity>
         ))}
-      </View>
     </ScrollView>
   );
 
@@ -182,20 +182,8 @@ export default function RoutesMenu({
     <ScrollView
       showsVerticalScrollIndicator={true}
       style={styles.detailsScroll}
-      stickyHeaderIndices={[4]}
+      stickyHeaderIndices={[0]}
     >
-      <View style={styles.detailsHeader}>
-        <TouchableOpacity
-          style={styles.finalizeButton}
-          onPress={() => {
-            onRouteSelect?.([]);
-            setSelected(null);
-            onModeChange?.(false);
-          }}
-        >
-          <Text style={styles.finalizeButtonText}>Finalizar ruta</Text>
-        </TouchableOpacity>
-      </View>
         {orderedStops.map((c, routeIdx) => {
           const isFirst = routeIdx === 0;
           const isLast = routeIdx === orderedStops.length - 1;
@@ -239,6 +227,18 @@ export default function RoutesMenu({
             </View>
           );
         })}
+        <View style={styles.detailsHeader}>
+        <TouchableOpacity
+          style={styles.finalizeButton}
+          onPress={() => {
+            onRouteSelect?.([]);
+            setSelected(null);
+            onModeChange?.(false);
+          }}
+        >
+          <Text style={styles.finalizeButtonText}>Finalizar ruta</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 };
@@ -247,11 +247,12 @@ export default function RoutesMenu({
 
   return (
     <View style={styles.container}>
-      <View style={styles.contentFrame}>
+      <View style={[styles.contentFrame, { flex: 1 }]}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>{headerTitle}</Text>
       </View>
       {selected ? renderDetails() : renderList()}
+
       </View>
     </View>
   );
@@ -260,8 +261,9 @@ export default function RoutesMenu({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
+    flex: 1,
   },
-  scroll: { flex: 1 },
+  scroll: {  },
   headerRow: {
     backgroundColor: '#F6F6F6',
     alignItems: 'flex-start',
@@ -274,7 +276,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1F1F1F',
   },
-  list: {},
+  list: { flex: 1, position: 'absolute', right: -0, left: -0, top: 44 },
   detailsScroll: { flex: 1 },
   detailsHeader: { backgroundColor: '#FFFFFF', paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4 },
   item: {

@@ -1,6 +1,6 @@
 // screens/EjeSchoolScreen.tsx
 import React from 'react';
-import { View, StyleSheet, Image, Text, TouchableOpacity, Platform, PermissionsAndroid } from 'react-native';
+import { View, StyleSheet, Image, Text, TouchableOpacity, Platform, PermissionsAndroid, BackHandler, Modal } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import type { Region } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,6 +10,7 @@ import MenuRoutes from '../../components/map/layout/MenuRoutes';
 import RoutesMenu from '../../components/FooterRoutes/RenderRoutes';
 import { routes } from '../../components/FooterRoutes/routesData';
 import api, { getAuthToken } from '../../api/base';
+import { logout } from '../../api/auth';
 import VehicleListModal from './driver/components/VehicleListModal';
 
  
@@ -33,7 +34,7 @@ function PageDriver() {
   const [selectedVehicleId, setSelectedVehicleId] = React.useState<string | number | undefined>(undefined);
   const [selectedDriverCoord, setSelectedDriverCoord] = React.useState<{ latitude: number; longitude: number } | undefined>(undefined);
   const [vehiclesOpen, setVehiclesOpen] = React.useState(false);
-  const [mapKey, setMapKey] = React.useState(0);
+  const [exitOpen, setExitOpen] = React.useState(false);
   const [page, setPage] = React.useState(1);
   const [loadingDevices, setLoadingDevices] = React.useState(false);
   const [hasMore, setHasMore] = React.useState(true);
@@ -64,6 +65,15 @@ function PageDriver() {
     };
     init();
   }, [fallback]);
+
+  React.useEffect(() => {
+    const onBack = () => {
+      setExitOpen(true);
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
+    return () => sub.remove();
+  }, []);
 
   const loadDevices = React.useCallback(async (p?: number) => {
     try {
@@ -111,9 +121,6 @@ function PageDriver() {
     loadDevices(1);
   }, [loadDevices]);
 
-  React.useEffect(() => {
-    setMapKey(k => k + 1);
-  }, [isDetails]);
 
   React.useEffect(() => {
     if (vehiclesOpen && devices.length === 0 && !loadingDevices) {
@@ -157,7 +164,6 @@ function PageDriver() {
   return (
     <View style={StyleSheet.absoluteFill}>
       <MapComponent
-        key={mapKey}
         initialRegion={initialRegion}
         renderTopBar={TopBarWithCard}
         bottomContent={bottomContent}
@@ -165,6 +171,22 @@ function PageDriver() {
         driverIconColor={selectedVehicleColor}
         driverDeviceId={selectedVehicleId}
       />
+      <Modal transparent visible={exitOpen} animationType="fade" onRequestClose={() => setExitOpen(false)}>
+        <View style={styles.exitOverlay}>
+          <View style={styles.exitCard}>
+            <TouchableOpacity style={styles.exitClose} onPress={() => setExitOpen(false)}>
+              <Text style={styles.exitCloseText}>×</Text>
+            </TouchableOpacity>
+            <Text style={styles.exitTitle}>¿Qué deseas hacer?</Text>
+            <TouchableOpacity style={styles.exitPrimary} onPress={async () => { try { await logout(); } catch {} setExitOpen(false); }}>
+              <Text style={styles.exitPrimaryText}>Cerrar sesión</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.exitSecondary} onPress={() => BackHandler.exitApp()}>
+              <Text style={styles.exitSecondaryText}>Salir</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       <VehicleListModal
         visible={vehiclesOpen}
         devices={devices}
@@ -174,7 +196,6 @@ function PageDriver() {
           setSelectedVehicleColor(String((item as any)?.icon_colors || (item as any)?.icon_color || (item as any)?.device_data?.icon_color || '#000'));
           setSelectedVehicleId((item as any)?.device_id ?? item?.id);
           setSelectedDriverCoord(undefined);
-          setMapKey(k => k + 1);
           setVehiclesOpen(false);
         }}
         loading={loadingDevices}
@@ -270,4 +291,13 @@ const styles = StyleSheet.create({
   dropdownScroll: { maxHeight: 180 },
   dropdownItem: { paddingVertical: 10, paddingHorizontal: 12, borderBottomWidth: 1, borderBottomColor: '#f2f2f2' },
   dropdownItemText: { fontSize: 16, color: '#222' },
+  exitOverlay: { flex: 1, backgroundColor: '#00000055', alignItems: 'center', justifyContent: 'center' },
+  exitCard: { width: '86%', maxWidth: 360, backgroundColor: '#fff', borderRadius: 12, padding: 16 },
+  exitClose: { position: 'absolute', top: 8, right: 8, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  exitCloseText: { fontSize: 22, color: '#888' },
+  exitTitle: { fontSize: 18, fontWeight: '700', color: '#1F1F1F', marginBottom: 16, paddingTop: 8 },
+  exitPrimary: { backgroundColor: '#5d01bc', paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginBottom: 10 },
+  exitPrimaryText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  exitSecondary: { backgroundColor: '#F3F4F6', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+  exitSecondaryText: { color: '#111827', fontSize: 16, fontWeight: '700' },
 });
