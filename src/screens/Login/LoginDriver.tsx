@@ -54,7 +54,12 @@ export default function LoginDriver() {
       console.log('LoginDriver request', { endpoint: '/auth/login', email, password: '***' });
       const res = await login({ email, password });
       console.log('LoginDriver response', res);
-      navigation.replace('PageDriver');
+      const token = (res as any)?.api_token || (res as any)?.token;
+      if (token) {
+        navigation.replace('PageDriver');
+      } else {
+        Alert.alert('Login', 'Respuesta sin token');
+      }
     } catch (e: any) {
       console.log('LoginDriver error', e?.response?.data || e);
       Alert.alert('Login fallido', e?.response?.data?.message || 'Error de autenticación');

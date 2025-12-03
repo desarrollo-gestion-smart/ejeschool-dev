@@ -20,6 +20,7 @@ export default function InitialLogins({ navigation }: Props) {
         <View style={[styles.content, { top: contentTop }] }>
           <View style={styles.logoContainer}>
             <ResponsiveLogo SvgComponent={LogoSvg} sizePercent={0.33} maxWidth={121} maxHeight={128} />
+           
           </View>
 
           <Text style={[styles.title, { fontSize: titleSize }]}>EjeSchool</Text>
