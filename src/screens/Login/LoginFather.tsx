@@ -26,6 +26,7 @@ import { login } from '../../api/auth';
 
 // Solo esto necesitamos del nuevo Gesture Handler
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { SinginWithaGoogle } from '../../components/Button/SinginWithaGoogle';
 
 type RootStackParamList = {
   RegisterStudent: undefined;
@@ -54,10 +55,16 @@ export default function LoginFather() {
       if (role === 'parent' || role === 'admin') {
         navigation.replace('PageFather');
       } else {
-        Alert.alert('Acceso denegado', 'Tu rol no tiene acceso a esta pantalla');
+        Alert.alert(
+          'Acceso denegado',
+          'Tu rol no tiene acceso a esta pantalla',
+        );
       }
     } catch (e: any) {
-      Alert.alert('Login fallido', e?.response?.data?.message || 'Error de autenticación');
+      Alert.alert(
+        'Login fallido',
+        e?.response?.data?.message || 'Error de autenticación',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -65,12 +72,12 @@ export default function LoginFather() {
 
   // Gesto de deslizar de derecha a izquierda para volver atrás (sin Reanimated)
   const swipeBackGesture = Gesture.Pan()
-    .minDistance(40)                    // Mínimo recorrido
+    .minDistance(40) // Mínimo recorrido
     .minPointers(1)
     .maxPointers(1)
-    .activeOffsetX([-10, 10])           // Solo se activa si el movimiento es principalmente horizontal
-    .failOffsetY([-15, 15])             // Se cancela si hay mucho movimiento vertical
-    .onEnd((event) => {
+    .activeOffsetX([-10, 10]) // Solo se activa si el movimiento es principalmente horizontal
+    .failOffsetY([-15, 15]) // Se cancela si hay mucho movimiento vertical
+    .onEnd(event => {
       // Deslizó hacia la derecha (translationX positivo) lo suficiente y rápido → volver atrás
       if (event.translationX > 120 && event.velocityX > 400) {
         navigation.goBack();
@@ -90,9 +97,15 @@ export default function LoginFather() {
           <View style={styles.space} />
           <View style={styles.content}>
             <SafeAreaView style={{ flex: 1 }}>
-              <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+              <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}
+              >
                 <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                  <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+                  <ScrollView
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    keyboardShouldPersistTaps="handled"
+                  >
                     <View style={styles.contentUp}>
                       <ResponsiveLogo SvgComponent={LogoSvg} />
                       <View style={styles.card}>
@@ -120,19 +133,40 @@ export default function LoginFather() {
                             onChangeText={setPassword}
                             returnKeyType="done"
                           />
-                          <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword(v => !v)}>
-                            <MaterialCommunityIcons name={showPassword ? 'eye-off' : 'eye'} size={22} color="#666" />
+                          <TouchableOpacity
+                            style={styles.eyeButton}
+                            onPress={() => setShowPassword(v => !v)}
+                          >
+                            <MaterialCommunityIcons
+                              name={showPassword ? 'eye-off' : 'eye'}
+                              size={22}
+                              color="#666"
+                            />
                           </TouchableOpacity>
                         </View>
-                        <TouchableOpacity style={[styles.loginButton, isLoading && styles.loginButtonDisabled]} onPress={handleLogin} disabled={isLoading}>
+                        <TouchableOpacity
+                          style={[
+                            styles.loginButton,
+                            isLoading && styles.loginButtonDisabled,
+                          ]}
+                          onPress={handleLogin}
+                          disabled={isLoading}
+                        >
                           {isLoading ? (
                             <ActivityIndicator color="#fff" />
                           ) : (
-                            <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
+                            <Text style={styles.loginButtonText}>
+                              Iniciar Sesión
+                            </Text>
                           )}
                         </TouchableOpacity>
                       </View>
-                      <Text style={styles.terms}>Al hacer clic en iniciar, acepta nuestros Términos y condiciones</Text>
+                      <Text style={styles.terms}>
+                      <SinginWithaGoogle />
+
+                        Al hacer clic en iniciar, acepta nuestros Términos y
+                        condiciones
+                      </Text>
                     </View>
                   </ScrollView>
                 </TouchableWithoutFeedback>
@@ -153,25 +187,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    zIndex: -1,
     flex: 1,
   },
-  middlelogo:{
+  middlelogo: {
     backgroundColor: '#5d01bc',
     height: '45%',
-    alignContent:'flex-end',
-    justifyContent:'flex-end',
+    alignContent: 'flex-end',
+    justifyContent: 'flex-end',
   },
-   schoolsvg: {
+  schoolsvg: {
     flex: 1,
     width: '100%',
-    
   },
-  space:{
+  space: {
     backgroundColor: 'white',
     height: '70%',
   },
-  LogoWrapper:{
+  LogoWrapper: {
     marginBottom: 24,
   },
   contentUp: {
@@ -263,10 +295,10 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   terms: {
-    color: 'white',
+    marginTop: 20,
+    color: 'black',
     fontSize: 12,
     textAlign: 'center',
-    marginHorizontal: 30,
     marginBottom: 20,
   },
 });
