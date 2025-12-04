@@ -1,12 +1,8 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';  
 import Config from 'react-native-config';
 
-
-<<<<<<< HEAD
-const BASE_URL = (Config as any)?.APP_DEV || (Config as any)?.APP_URL || (Config as any)?.APP_url || 'https://dev.ejesatelital.com/api';
-=======
 const BASE_URL = (Config as any)?.APP_DEV || (Config as any)?.APP_URL || (Config as any)?.APP_url || '';
->>>>>>> pruebas/dev
+
 
 const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,

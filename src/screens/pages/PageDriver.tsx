@@ -8,6 +8,7 @@ import MapComponent from '../../components/map/MapComponent';
 import TopBar from '../../components/map/layout/TopBar';
 import MenuRoutes from '../../components/map/layout/MenuRoutes';
 import RoutesMenu from '../../components/FooterRoutes/RenderRoutes';
+import DetailRoutes from '../../components/FooterRoutes/DetailRoutes';
 import type { RouteData } from '../../components/FooterRoutes/routesData';
 import api, { getAuthToken, getCompanyId } from '../../api/base';
 import Config from 'react-native-config';
@@ -22,6 +23,7 @@ type BottomArgs = { collapsed: boolean; toggle: () => void; onRouteSelect: (stop
 function PageDriver() {
   const insets = useSafeAreaInsets();
   const [isDetails, setIsDetails] = React.useState(false);
+  const [selectedRoute, setSelectedRoute] = React.useState<RouteData | null>(null);
   const [initialRegion, setInitialRegion] = React.useState<Region | undefined>(undefined);
   const [devices, setDevices] = React.useState<Array<{ id?: string | number; device_id?: string | number; name?: string; icon_color?: string; icon_colors?: string; device_data?: { icon_color?: string } }>>([]);
   const [selectedVehicleName, setSelectedVehicleName] = React.useState<string>('');
@@ -65,20 +67,15 @@ function PageDriver() {
   React.useEffect(() => {
     const loadRoutes = async () => {
       try {
-        const base = (api.defaults as any)?.baseURL || (Config as any)?.APP_DEV ;
-        let data: any[] = [];
-        if (base) {
-          const res = await api.get('/travels/v1/routes');
-          const payload = res.data;
-          console.log('PageDriver routes GET base', base);
-          console.log('PageDriver routes raw payload type', typeof payload);
-          data = Array.isArray(payload) ? payload : (payload?.data || payload?.routes || []);
-        }
+        const res = await api.get('/travels/v1/routes');
+        const payload = res.data;
+        console.log('PageDriver routes raw payload type', typeof payload);
+        const rawList = Array.isArray(payload) ? payload : (payload?.data || payload?.routes || []);
         const cid = getCompanyId();
         console.log('PageDriver routes companyId used', cid);
-        const filtered = cid != null ? data.filter((r: any) => Number(r?.company_id) === Number(cid)) : data;
-        console.log('PageDriver routes filtered count', filtered?.length || 0);
-        
+        const filteredRaw = (cid != null) ? (Array.isArray(rawList) ? rawList.filter((r: any) => Number(r?.company_id) === Number(cid)) : []) : (Array.isArray(rawList) ? rawList : []);
+        const effectiveRaw = Array.isArray(filteredRaw) && filteredRaw.length > 0 ? filteredRaw : (Array.isArray(rawList) ? rawList : []);
+
         const deg2rad = (deg: number) => deg * (Math.PI / 180);
         const haversineKm = (a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }): number => {
           const R = 6371;
@@ -90,7 +87,7 @@ function PageDriver() {
           return R * c;
         };
 
-        const mapped: RouteData[] = filtered.map((r: any) => {
+        const mapped: RouteData[] = (Array.isArray(effectiveRaw) ? effectiveRaw : []).map((r: any) => {
           const secs = Number(r?.estimated_travel_time_seconds ?? r?.estimated_driving_time_seconds ?? 0);
           const mins = Math.max(1, Math.round(secs / 60));
           const stops = Array.isArray(r?.stops) ? r.stops.map((s: any) => ({ latitude: Number(s?.latitude), longitude: Number(s?.longitude), address: String(s?.address || '') })) : [];
@@ -187,20 +184,49 @@ function PageDriver() {
 
   const BottomContent: React.FC<BottomArgs> = ({ collapsed, toggle, onRouteSelect, onModeChange }: BottomArgs) => (
     <MenuRoutes collapsed={collapsed}>
-      <RoutesMenu
-        routes={routesApi}
-        collapsed={collapsed}
-        onToggle={toggle}
-        onRouteSelect={onRouteSelect}
-        onModeChange={(v: boolean) => {
-          setIsDetails(v);
-          onModeChange?.(v);
-        }}
-      />
+      {isDetails && selectedRoute ? (
+        <DetailRoutes
+          route={selectedRoute}
+          onRouteSelect={(stops) => {
+            console.log('PageDriver DetailRoutes onRouteSelect:', stops?.length || 0);
+            onRouteSelect?.(stops);
+          }}
+          onModeChange={(v: boolean) => {
+            console.log('PageDriver DetailRoutes onModeChange:', v);
+            setIsDetails(v);
+            onModeChange?.(v);
+          }}
+          onClose={() => {
+            setSelectedRoute(null);
+          }}
+        />
+      ) : (
+        <RoutesMenu
+          routes={routesApi}
+          collapsed={collapsed}
+          onToggle={toggle}
+          onRouteSelect={(stops) => {
+            console.log('PageDriver onRouteSelect called with stops:', stops?.length || 0);
+            onRouteSelect?.(stops);
+          }}
+          selectedRoute={selectedRoute}
+          onSelectRoute={(route) => {
+            console.log('PageDriver onSelectRoute called:', route?.id, route?.name);
+            setSelectedRoute(route);
+            setIsDetails(true);
+            onModeChange?.(true);
+          }}
+          onModeChange={(v: boolean) => {
+            console.log('PageDriver onModeChange:', v);
+            setIsDetails(v);
+            onModeChange?.(v);
+          }}
+        />
+      )}
     </MenuRoutes>
   );
 
-  const TopBarWithCard: React.FC = () => (
+  const TopBarWithCard = React.useMemo(() => (
     !isDetails ? (
       <>
         <TopBar title="Eje School" />
@@ -216,13 +242,13 @@ function PageDriver() {
         </View>
       </>
     ) : null
-  );
+  ), [isDetails, insets.top, selectedVehicleName]);
 
   return (
     <View style={StyleSheet.absoluteFill}>
       <MapComponent
         initialRegion={initialRegion}
-        renderTopBar={<TopBarWithCard />}
+        renderTopBar={TopBarWithCard}
         bottomContent={BottomContent}
         driver={selectedDriverCoord}
         driverIconColor={selectedVehicleColor}

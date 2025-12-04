@@ -1,7 +1,5 @@
-<<<<<<< HEAD
+
 import api, { setAuthToken, setCompanyId } from './base';
-=======
-import api, { setAuthToken } from './base';
 import * as FileSystem from 'expo-file-system/legacy';
 //@ts-ignore
 const SESSION_PATH = `${FileSystem.documentDirectory || ''}session.json`;
@@ -22,7 +20,7 @@ const clearSession = async () => {
     }
   } catch {}
 };
->>>>>>> pruebas/dev
+
 
 export interface LoginRequest {
   email: string;
@@ -56,13 +54,12 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   const payload = response.data;
   const token = extractToken(payload);
   setAuthToken(token);
-<<<<<<< HEAD
   const cid = extractCompanyId(payload);
   if (cid != null) setCompanyId(cid);
-=======
+
   const role = (data.role as any) ?? (payload?.user?.role as any);
   await saveSession(token, role, payload?.user ?? payload);
->>>>>>> pruebas/dev
+
   const masked = token ? `${String(token).slice(0, 6)}...${String(token).slice(-4)}` : null;
   console.log('auth.login token', masked);
   return { ...payload, api_token: token ?? payload?.api_token, token: token ?? payload?.token } as LoginResponse;

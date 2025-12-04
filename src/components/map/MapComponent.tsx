@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, TouchableOpacity, Image, Alert, Platform, PermissionsAndroid, Text } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Image, Alert, Platform, PermissionsAndroid } from 'react-native';
 import MapView, { Marker, Region, PROVIDER_GOOGLE } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import Config from 'react-native-config';
@@ -11,7 +11,6 @@ import MarkerOrigin from '../../assets/markers/marker-origin.svg';
 import MarkerDestination from '../../assets/markers/makerr-destination-own.svg';
 import type { Coordinate } from '../FooterRoutes/routesData';
 import MarkerMe from '../../assets/markers/waypoint.svg';
-import SvgIcon from '../SvgIcon';
 const CarSport = require('../../assets/icons/carro-deportivo.png');
 
 type MarkerItem = {
@@ -110,12 +109,11 @@ export default function MapComponent({
   const [_routeCoords, _setRouteCoords] = React.useState<Coordinate[]>([]);
   const [collapsed, setCollapsed] = React.useState(true);
   const [isFollowing, setIsFollowing] = React.useState(false);
-  const waypointColors = [ '#10B981', '#EF4444'];
+  
   const googleApiKey = getMapsApiKey();
   const [userLocation, setUserLocation] = React.useState<Coordinate | null>(null);
   const userLocationRef = React.useRef<Coordinate | null>(null);
   const [_driverLive, _setDriverLive] = React.useState<Coordinate | null>(null);
-  const hasInitialCenterRef = React.useRef(false);
   const [directionsErrorNotified, setDirectionsErrorNotified] = React.useState(false);
   const BottomContentComp = bottomContent as React.ComponentType<{
     collapsed: boolean;
@@ -123,6 +121,13 @@ export default function MapComponent({
     onRouteSelect: (stops: Coordinate[]) => void;
     onModeChange: (isDetails: boolean) => void;
   }> | undefined;
+
+  const DEFAULT_REGION: Region = {
+    latitude: 0,
+    longitude: 0,
+    latitudeDelta: 60,
+    longitudeDelta: 60,
+  };
 
   React.useEffect(() => {
     if (userLocation) {
@@ -147,14 +152,11 @@ export default function MapComponent({
   
 
   React.useEffect(() => {
-    if (initialRegion && !userLocation) {
+    if (initialRegion) {
       const { latitude, longitude, latitudeDelta, longitudeDelta } = initialRegion;
-      const coord = { latitude, longitude };
-      setUserLocation(coord);
-      userLocationRef.current = coord;
       mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta, longitudeDelta }, 600);
     }
-  }, [initialRegion, userLocation]);
+  }, [initialRegion]);
 
   // Solicitamos permisos de ubicación
   React.useEffect(() => {
@@ -165,69 +167,10 @@ export default function MapComponent({
           PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
         ]);
         console.log('MapComponent android permissions', res);
-        const grantedFine = res[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION] === PermissionsAndroid.RESULTS.GRANTED;
-        const grantedCoarse = res[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] === PermissionsAndroid.RESULTS.GRANTED;
-        if (!grantedFine && !grantedCoarse) return;
       } else {
         Geolocation.setRNConfiguration({ skipPermissionRequests: false, authorizationLevel: 'whenInUse' } as any);
         Geolocation.requestAuthorization();
       }
-
-      Geolocation.getCurrentPosition(
-        pos => {
-          console.log('MapComponent getCurrentPosition', pos?.coords);
-          const { latitude, longitude } = pos.coords;
-          const coord = { latitude, longitude };
-          setUserLocation(coord);
-          userLocationRef.current = coord;
-          if (!hasInitialCenterRef.current) {
-            hasInitialCenterRef.current = true;
-            mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 600);
-          }
-        },
-        _err => { console.log('MapComponent getCurrentPosition error', _err); },
-        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-      );
-<<<<<<< HEAD
-      setTimeout(() => {
-        if (!userLocationRef.current) {
-          Geolocation.getCurrentPosition(
-            pos => {
-              console.log('MapComponent getCurrentPosition fallback', pos?.coords);
-              const { latitude, longitude } = pos.coords;
-              const coord = { latitude, longitude };
-              setUserLocation(coord);
-              userLocationRef.current = coord;
-              if (!hasInitialCenterRef.current) {
-                hasInitialCenterRef.current = true;
-                mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 600);
-              }
-            },
-            e => { console.log('MapComponent fallback error', e); },
-            { enableHighAccuracy: false, timeout: 15000, maximumAge: 10000 }
-          );
-        }
-      }, 6000);
-      setTimeout(() => {
-        if (!userLocationRef.current) {
-          Geolocation.getCurrentPosition(
-            pos => {
-              const { latitude, longitude } = pos.coords;
-              const coord = { latitude, longitude };
-              setUserLocation(coord);
-              userLocationRef.current = coord;
-              if (!hasInitialCenterRef.current) {
-                hasInitialCenterRef.current = true;
-                mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 600);
-              }
-            },
-            () => {},
-            { enableHighAccuracy: false, timeout: 6000, maximumAge: 600000 }
-          );
-        }
-      }, 12500);
-=======
->>>>>>> pruebas/dev
     };
     init();
   }, []);
@@ -239,23 +182,7 @@ export default function MapComponent({
   }, [activeRoute, origin, destination]);
 
   React.useEffect(() => {
-<<<<<<< HEAD
-    const watchId = Geolocation.watchPosition(
-      pos => {
-        console.log('MapComponent watchPosition', pos?.coords);
-        const { latitude, longitude } = pos.coords;
-          const coord = { latitude, longitude };
-          setUserLocation(coord);
-          userLocationRef.current = coord;
-          if (!hasInitialCenterRef.current) {
-            hasInitialCenterRef.current = true;
-            mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 600);
-          }
-      },
-      _err => { console.log('MapComponent watchPosition error', _err); },
-      { enableHighAccuracy: true, distanceFilter: 0, interval: 3000 }
-    );
-=======
+
     let watchId: any = null;
     let intervalId: any = null;
         // @ts-ignore
@@ -264,27 +191,9 @@ export default function MapComponent({
       const coord = { latitude, longitude };
       setUserLocation(coord);
       userLocationRef.current = coord;
-      setShowUserDot(false);
-      if (!hasInitialCenterRef.current) {
-        hasInitialCenterRef.current = true;
-        mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 600);
-      }
     };
 
-    const startLowFrequency = () => {
-      Geolocation.getCurrentPosition(
-        p => updateFromPosition(p as any),
-        e => console.log('MapComponent low-frequency error', e),
-        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-      );
-      intervalId = setInterval(() => {
-        Geolocation.getCurrentPosition(
-          p => updateFromPosition(p as any),
-          e => console.log('MapComponent low-frequency interval error', e),
-          { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-        );
-      }, 600000);
-    };
+    const startLowFrequency = () => {};
 
     const startHighFrequency = () => {
       watchId = Geolocation.watchPosition(
@@ -299,19 +208,13 @@ export default function MapComponent({
     } else {
       startLowFrequency();
     }
->>>>>>> pruebas/dev
 
     return () => {
       if (watchId !== null) Geolocation.clearWatch(watchId);
       if (intervalId !== null) clearInterval(intervalId as any);
     };
-<<<<<<< HEAD
-  }, []);
 
-  
-=======
   }, [isRouteActive]);
->>>>>>> pruebas/dev
 
   React.useEffect(() => {}, [driverDeviceId]);
 
@@ -339,6 +242,7 @@ export default function MapComponent({
   // APLICACIÓN DE STOPS CON GEOCODING
   const applyRouteStops = React.useCallback(
     async (stops: Coordinate[]) => {
+      console.log('MapComponent applyRouteStops called with stops:', stops?.length || 0);
       const allStops = (stops || []).filter(Boolean);
       const routeStopsUniq = allStops.filter((s, idx, arr) => arr.findIndex(t => t.latitude === s.latitude && t.longitude === s.longitude) === idx);
 
@@ -396,20 +300,19 @@ export default function MapComponent({
     <View style={styles.container}>
       {renderTopBar ? <View style={styles.topOverlay}>{renderTopBar}</View> : null}
 
-      {userLocation ? (
-        <MapView
+      <MapView
           ref={mapRef}
           style={styles.map}
           initialRegion={{
-            latitude: userLocation.latitude,
-            longitude: userLocation.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
+            latitude: (initialRegion ?? DEFAULT_REGION).latitude,
+            longitude: (initialRegion ?? DEFAULT_REGION).longitude,
+            latitudeDelta: (initialRegion ?? DEFAULT_REGION).latitudeDelta,
+            longitudeDelta: (initialRegion ?? DEFAULT_REGION).longitudeDelta,
           }}
           provider={PROVIDER_GOOGLE}
           mapType="standard"
           customMapStyle={uberLightMapStyle}
-          showsUserLocation={false}
+          showsUserLocation={true}
           showsMyLocationButton={false}
           onUserLocationChange={e => {
             const coord = (e && e.nativeEvent && e.nativeEvent.coordinate) || ({} as any);
@@ -418,15 +321,7 @@ export default function MapComponent({
             if (typeof latitude === 'number' && typeof longitude === 'number') {
               const c = { latitude, longitude };
               setUserLocation(c);
-              if (!hasInitialCenterRef.current) {
-                hasInitialCenterRef.current = true;
-                mapRef.current?.animateToRegion({
-                  latitude,
-                  longitude,
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
-                }, 400);
-              } else if (isFollowing) {
+              if (isFollowing) {
                 mapRef.current?.animateToRegion({
                   latitude,
                   longitude,
@@ -442,23 +337,14 @@ export default function MapComponent({
           <Marker key={m.id} coordinate={m.coordinate} title={m.title} />
         ))}
 
-<<<<<<< HEAD
-        {userLocation && (
-          <Marker
-            coordinate={userLocation as Coordinate}
-            anchor={{ x: 0.5, y: 0.5 }}
-            tracksViewChanges={true}
-            zIndex={999}
-          >
-=======
+
         {(_driver ?? userLocation) && (
           <Marker coordinate={(_driver ?? userLocation) as Coordinate} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
->>>>>>> pruebas/dev
             <Image source={CarSport} style={[styles.carMarker, driverIconColor ? { tintColor: driverIconColor } : null]} />
           </Marker>
         )}
 
-        {routeStopMarkers.map((marker, idx) => (
+        {routeStopMarkers.map((marker) => (
           <Marker
             key={marker.id}
             coordinate={marker.coordinate}
@@ -498,11 +384,6 @@ export default function MapComponent({
         ) : null}
 
         </MapView>
-      ) : (
-        <View style={styles.mapFallback}>
-          <Text style={styles.mapFallbackText}>Buscando señal GPS…</Text>
-        </View>
-      )}
 
       <View style={styles.followButtonContainer}>
         {BottomContentComp ? (
@@ -594,8 +475,8 @@ const styles = StyleSheet.create({
   followButton: {
     position: 'absolute',
     right: 12,
-    bottom: 16,
-    backgroundColor: '#fff',
+    bottom: 300,
+    backgroundColor: '#6D28D9',
     borderRadius: 30,
     padding: 8,
     elevation: 24,
@@ -605,7 +486,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     zIndex: 100,
   },
-  aimstyles: { width: 28, height: 28, tintColor: '#707070' },
+  aimstyles: { width: 28, height: 28, tintColor: '#FFFFFF' },
   reportsButtonContainer: { position: 'absolute', zIndex: 30 },
   reportsButton: { backgroundColor: '#6D28D9', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8 },
   reportsButtonText: { color: '#fff', fontSize: 12, fontWeight: '600' },
