@@ -114,7 +114,7 @@ export default function RoutesMenu({
 
   const renderList = () => (
     <ScrollView style={styles.detailsScroll}
-    contentContainerStyle={{ paddingBottom: 20 }}
+    contentContainerStyle={{ paddingBottom:10 }}
     showsVerticalScrollIndicator={true}>
         {routes.map(r => (
           <TouchableOpacity
@@ -182,7 +182,6 @@ export default function RoutesMenu({
     <ScrollView
       showsVerticalScrollIndicator={true}
       style={styles.detailsScroll}
-      stickyHeaderIndices={[0]}
     >
         {orderedStops.map((c, routeIdx) => {
           const isFirst = routeIdx === 0;
@@ -251,6 +250,7 @@ export default function RoutesMenu({
       <View style={styles.headerRow}>
         <Text style={styles.title}>{headerTitle}</Text>
       </View>
+
       {selected ? renderDetails() : renderList()}
 
       </View>
@@ -263,20 +263,22 @@ const styles = StyleSheet.create({
     width: '100%',
     flex: 1,
   },
-  scroll: {  },
+  scroll: { 
+    flex: 1,
+
+   },
   headerRow: {
-    backgroundColor: '#F6F6F6',
+    paddingVertical: 12,
+    backgroundColor: 'transparent',
     alignItems: 'flex-start',
     justifyContent: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
   },
   title: {
     fontSize: 17,
     fontWeight: '600',
     color: '#1F1F1F',
   },
-  list: { flex: 1, position: 'absolute', right: -0, left: -0, top: 44 },
+  list: { flex: 1 },
   detailsScroll: { flex: 1 },
   detailsHeader: { backgroundColor: '#FFFFFF', paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4 },
   item: {
@@ -299,7 +301,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F0F0F0',
   },
   stopLeft: { flexDirection: 'row', flex: 1, alignItems: 'center' },
-  stopIconCol: { width: 24, alignItems: 'center', position: 'relative' },
+  stopIconCol: { width: 24, alignItems: 'center', },
   connectorTop: {
     position: 'absolute',
     top: -12,

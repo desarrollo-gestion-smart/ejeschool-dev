@@ -11,6 +11,7 @@ import MarkerOrigin from '../../assets/markers/marker-origin.svg';
 import MarkerDestination from '../../assets/markers/makerr-destination-own.svg';
 import type { Coordinate } from '../FooterRoutes/routesData';
 import MarkerMe from '../../assets/markers/waypoint.svg';
+import SvgIcon from '../SvgIcon';
 const CarSport = require('../../assets/icons/carro-deportivo.png');
 
 type MarkerItem = {
@@ -322,7 +323,6 @@ export default function MapComponent({
       const enrichedStops = await Promise.all(geocodingPromises);
 
       const primaryRouteStops = enrichedStops.filter(s => !s.status);
-      const extraStops = enrichedStops.filter(s => !!s.status);
 
       if (primaryRouteStops.length < 2) {
         setActiveRoute({});
@@ -338,9 +338,8 @@ export default function MapComponent({
       setActiveRoute({ origin: originStop, destination: destinationStop, waypoints: wp });
 
       const nextMarkers: MarkerItem[] = [
-        ...wp.map((c, i) => ({ id: 100 + i, title: c.name || c.address || `Punto ${i + 1}`, coordinate: c, type: 'waypoint' as const })),
-        { id: 2, title: destinationStop.name || destinationStop.address || 'Destino', coordinate: destinationStop, type: 'destination' },
-        ...extraStops.map((c, i) => ({ id: 200 + i, title: c.name || c.address || (c.status === 'red' ? 'Conductor' : 'Punto'), coordinate: c, type: 'waypoint' as const })),
+        ...wp.map((c, i) => ({ id: 100 + i, title: c.name || c.address || `Punto ${i + 1}`, coordinate: c, type: 'waypoint' as const, status: c.status })),
+        { id: 2, title: destinationStop.name || destinationStop.address || 'Destino', coordinate: destinationStop, type: 'destination', status: destinationStop.status },
       ];
 
       setRouteStopMarkers(nextMarkers);
@@ -417,9 +416,7 @@ export default function MapComponent({
             anchor={{ x: 0.5, y: 0.5 }}
             tracksViewChanges={false}
           >
-            {marker.type === 'origin' ? (
-              <MarkerOrigin width={24} height={24} color="#2563EB" />
-            ) : marker.type === 'destination' ? (
+            { marker.type === 'destination' ? (
               <MarkerDestination width={30} height={50} fill="#2563EB" color="#2563EB" />
             ) : marker.nameRol === 'conductor' ? (
               <MarkerMe width={22} height={22} fill="#000" />
@@ -427,7 +424,7 @@ export default function MapComponent({
               <MarkerOrigin
                 width={22}
                 height={22}
-                color={waypointColors[Math.max(0, (idx - 1) % waypointColors.length)]}
+                fill ={(marker.status === 'green') ? '#10B981' : '#EF4444'}
               />
             )}
           </Marker>
