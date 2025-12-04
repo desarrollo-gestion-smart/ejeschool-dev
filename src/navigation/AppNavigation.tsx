@@ -1,4 +1,5 @@
 import { NavigationContainer } from '@react-navigation/native';
+import { View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import type { RootStackParamList } from '../types/Navigation';
@@ -55,10 +56,9 @@ export default function AppNavigator() {
     init();
   }, []);
 
-  if (!ready) return null;
-
   return (
     <NavigationContainer>
+<<<<<<< HEAD
       <Stack.Navigator
         initialRouteName={initial}
         screenOptions={{ headerShown: false }}
@@ -77,6 +77,29 @@ export default function AppNavigator() {
         <Stack.Screen name="MyAccount" component={MyAccount} />
         <Stack.Screen name="Historias" component={Historias} />
       </Stack.Navigator>
+=======
+      {ready ? (
+        <Stack.Navigator
+          initialRouteName={initial}
+          screenOptions={{ headerShown: false }}
+        >
+          <Stack.Screen name="vehicleVerification" component={vehicleVerification} />
+          <Stack.Screen name="InitialLogins" component={InitialLogins} />
+          <Stack.Screen name="LoginFather" component={LoginFather} />
+          <Stack.Screen name="LoginDriver" component={LoginDriver} />
+          <Stack.Screen name="RegisterStudent" component={RegisterStudent} />
+          <Stack.Screen name="PageDriver" component={PageDriver} />
+          <Stack.Screen name="PageFather" component={PageFather} />
+          <Stack.Screen name="DashboardFather" component={DashboardFather} />
+          <Stack.Screen name="ChatSupport" component={ChatSupport} />
+          <Stack.Screen name="Notifications" component={Notifications} />
+          <Stack.Screen name="MyAccount" component={MyAccount} />
+          <Stack.Screen name="Historias" component={Historias} />
+        </Stack.Navigator>
+      ) : (
+        <View />
+      )}
+>>>>>>> dev
     </NavigationContainer>
   );
 }

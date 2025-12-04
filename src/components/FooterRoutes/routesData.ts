@@ -29,6 +29,7 @@ export type RouteData = {
   stops: (Coordinate & { student?: string } & { Directions?: string })[];
   info?: StudentInfo[];
   distanceKm?: number;
+
   companyId?: number;
 };
 

@@ -20,6 +20,7 @@ import MapComponent from '../../../components/map/MapComponent';
 import TopBar from '../../../components/map/layout/TopBar';
 import MenuRoutes from '../../../components/map/layout/MenuRoutes';
 import RoutesMenu from '../../../components/FooterRoutes/RenderRoutes';
+import DetailRoutes from '../../../components/FooterRoutes/DetailRoutes';
 import { routes, RouteData } from '../../../components/FooterRoutes/routesData';
 import api, { getAuthToken } from '../../../api/base';
 import { logout } from '../../../api/auth';
@@ -40,6 +41,7 @@ function PageDriver() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const [isDetails, setIsDetails] = React.useState(false);
+  const [selectedRoute, setSelectedRoute] = React.useState<RouteData | null>(null);
 
   // ESTADO DEL USUARIO (nombre + avatar)
   const [driverName, setDriverName] = React.useState<string>('Cargando...');
@@ -119,8 +121,11 @@ function PageDriver() {
         const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
         const res = await api.get('/travels/v1/routes', { headers });
         const payload = res.data;
-        const data = Array.isArray(payload) ? payload : (payload?.data || payload?.routes || []);
-        const mapped: RouteData[] = (Array.isArray(data) ? data : []).map((r: any) => {
+        const rawList = Array.isArray(payload) ? payload : (payload?.data || payload?.routes || []);
+        const cid = companyId;
+        const filteredRaw = (cid != null) ? (Array.isArray(rawList) ? rawList.filter((r: any) => Number(r?.company_id) === Number(cid)) : []) : (Array.isArray(rawList) ? rawList : []);
+        const effectiveRaw = Array.isArray(filteredRaw) && filteredRaw.length > 0 ? filteredRaw : (Array.isArray(rawList) ? rawList : []);
+        const mapped: RouteData[] = (Array.isArray(effectiveRaw) ? effectiveRaw : []).map((r: any) => {
           const secs = Number(r?.estimated_travel_time_seconds ?? r?.estimated_driving_time_seconds ?? 0);
           const mins = Math.max(1, Math.round(secs / 60));
           const stops = Array.isArray(r?.stops)
@@ -212,21 +217,43 @@ function PageDriver() {
     if (vehiclesOpen && devices.length === 0 && !loadingDevices) loadDevices(1);
   }, [vehiclesOpen, devices.length, loadingDevices, loadDevices]);
 
-  const bottomContent = React.useCallback(({ collapsed, toggle, onRouteSelect, onModeChange }: BottomArgs) => (
+  const BottomContent: React.FC<BottomArgs> = ({ collapsed, toggle, onRouteSelect, onModeChange }: BottomArgs) => (
     <MenuRoutes>
-      <RoutesMenu
-        key={`routes-${companyId ?? 'none'}`}
-        routes={routesApi}
-        collapsed={collapsed}
-        onToggle={toggle}
-        onRouteSelect={onRouteSelect}
-        onModeChange={(v: boolean) => {
-          setIsDetails(v);
-          onModeChange?.(v);
-        }}
-      />
+      {isDetails && selectedRoute ? (
+        <DetailRoutes
+          route={selectedRoute}
+          onRouteSelect={(stops) => {
+            onRouteSelect?.(stops);
+          }}
+          onModeChange={(v: boolean) => {
+            setIsDetails(v);
+            onModeChange?.(v);
+          }}
+          onClose={() => {
+            setSelectedRoute(null);
+          }}
+        />
+      ) : (
+        <RoutesMenu
+          key={`routes-${companyId ?? 'none'}`}
+          routes={routesApi}
+          collapsed={collapsed}
+          onToggle={toggle}
+          onRouteSelect={onRouteSelect}
+          selectedRoute={selectedRoute}
+          onSelectRoute={(route) => {
+            setSelectedRoute(route);
+            setIsDetails(true);
+            onModeChange?.(true);
+          }}
+          onModeChange={(v: boolean) => {
+            setIsDetails(v);
+            onModeChange?.(v);
+          }}
+        />
+      )}
     </MenuRoutes>
-  ), [routesApi, companyId]);
+  );
 
   const TopBarWithCard = React.useMemo(() => (
     !isDetails ? (
@@ -261,7 +288,7 @@ function PageDriver() {
       <MapComponent
         initialRegion={initialRegion}
         renderTopBar={TopBarWithCard}
-        bottomContent={bottomContent}
+        bottomContent={BottomContent}
         driver={selectedDriverCoord}
         driverIconColor={selectedVehicleColor}
         driverDeviceId={selectedVehicleId}

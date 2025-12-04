@@ -1,4 +1,5 @@
-import api, { setAuthToken } from './base';
+
+import api, { setAuthToken, setCompanyId } from './base';
 import * as FileSystem from 'expo-file-system/legacy';
 //@ts-ignore
 const SESSION_PATH = `${FileSystem.documentDirectory || ''}session.json`;
@@ -19,6 +20,7 @@ const clearSession = async () => {
     }
   } catch {}
 };
+
 
 export interface LoginRequest {
   email: string;
@@ -52,8 +54,12 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   const payload = response.data;
   const token = extractToken(payload);
   setAuthToken(token);
+  const cid = extractCompanyId(payload);
+  if (cid != null) setCompanyId(cid);
+
   const role = (data.role as any) ?? (payload?.user?.role as any);
   await saveSession(token, role, payload?.user ?? payload);
+
   const masked = token ? `${String(token).slice(0, 6)}...${String(token).slice(-4)}` : null;
   console.log('auth.login token', masked);
   return { ...payload, api_token: token ?? payload?.api_token, token: token ?? payload?.token } as LoginResponse;
@@ -90,6 +96,8 @@ export const register = async (data: RegisterRequest): Promise<RegisterResponse>
   const payload = response.data;
   const token = extractToken(payload);
   setAuthToken(token);
+  const cid = extractCompanyId(payload);
+  if (cid != null) setCompanyId(cid);
   return { ...payload, token } as RegisterResponse;
 };
 export interface SocialRegisterResponse {
@@ -107,6 +115,8 @@ export const registerWithGoogle = async (data: SocialRegisterRequest): Promise<S
   const payload = response.data;
   const token = extractToken(payload);
   setAuthToken(token);
+  const cid = extractCompanyId(payload);
+  if (cid != null) setCompanyId(cid);
   return { ...payload, token } as SocialRegisterResponse;
 };
 
@@ -114,3 +124,13 @@ export interface SocialRegisterRequest {
   idToken: string; 
   role?: 'parent' | 'driver' | 'admin';
 }
+
+const extractCompanyId = (payload: any): number | null => {
+  if (!payload) return null;
+  const cands = [payload.company_id, payload?.user?.company_id, payload?.data?.company_id];
+  for (const c of cands) {
+    const n = Number(c);
+    if (!isNaN(n) && n > 0) return n;
+  }
+  return null;
+};

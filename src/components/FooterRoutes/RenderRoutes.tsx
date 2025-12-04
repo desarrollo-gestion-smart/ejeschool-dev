@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
-import Config from 'react-native-config';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 // Importamos los tipos actualizados de routesData.ts (simulando que Coordinate tiene 'address')
 // Nota: 'Coordinate' debe ser exportado desde '../FooterRoutes/routesData'
 import { RouteData } from './routesData';
@@ -20,9 +13,12 @@ export type Coordinate = {
 };
 
 import VehicleIcon from '../../assets/icons/car-black.svg';
+<<<<<<< HEAD
 import MarkerOrigin from '../../assets/markers/marker-origin-own.svg';
 import MarkerDestination from '../../assets/markers/marker-destination.svg';
 import AvatarBadge from '../AvatarBadge';
+=======
+>>>>>>> dev
 
 type Props = {
   title?: string;
@@ -31,89 +27,25 @@ type Props = {
   onRouteSelect?: (stops: Coordinate[]) => void;
   onToggle?: () => void;
   onModeChange?: (isDetails: boolean) => void;
+  selectedRoute?: RouteData | null;
+  onSelectRoute?: (route: RouteData | null) => void;
 };
 export default function RoutesMenu({
   title = 'Rutas Activas',
   routes,
   collapsed: _collapsed,
-  onToggle,
-  onRouteSelect,
-  onModeChange,
+  onToggle: _onToggle,
+  onRouteSelect: _onRouteSelect,
+  onModeChange: _onModeChange,
+  selectedRoute: _selectedRoute,
+  onSelectRoute,
 }: Props) {
-  const [selected, setSelected] = React.useState<RouteData | null>(null);
-  const [addressMap, setAddressMap] = React.useState<Record<string, string>>({});
 
-  React.useEffect(() => {
-    if (!selected && _collapsed) onToggle?.();
-    onModeChange?.(!!selected);
-  }, [_collapsed, selected, onToggle, onModeChange]);
+  
 
-  const parseMinutes = (time: string): number => {
-    const m = String(time).match(/(\d+(?:\.\d+)?)\s*min/i);
-    return m ? Math.round(Number(m[1])) : 0;
-  };
-
-  const getMapsApiKey = (): string => {
-    return (Config as any)?.GOOGLE_MAPS_API_KEY || (Config as any)?.Maps_API_KEY || '';
-  };
-
-  const getAddressFromCoordinates = React.useCallback(async (latitude: number, longitude: number): Promise<string> => {
-    const apiKey = getMapsApiKey();
-    if (!apiKey) return '';
-    try {
-      const resp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`);
-      const data = await resp.json();
-      if (data.status === 'OK' && data.results?.length > 0) {
-        const comps = Array.isArray(data.results[0].address_components) ? data.results[0].address_components : [];
-        const route = String((comps.find((c: any) => (c.types || []).includes('route'))?.long_name) || '').trim();
-        const number = String((comps.find((c: any) => (c.types || []).includes('street_number'))?.long_name) || '').trim();
-        const out = `${route}${route && number ? ' ' : ''}${number}`.trim();
-        return out;
-      }
-      return '';
-    } catch {
-      return '';
-    }
-  }, []);
-
-  const deg2rad = (deg: number) => deg * (Math.PI / 180);
-  const haversineKm = (a: Coordinate, b: Coordinate): number => {
-    const R = 6371;
-    const dLat = deg2rad(b.latitude - a.latitude);
-    const dLon = deg2rad(b.longitude - a.longitude);
-    const s1 = Math.sin(dLat / 2);
-    const s2 = Math.sin(dLon / 2);
-    const c =
-      2 *
-      Math.asin(
-        Math.sqrt(
-          s1 * s1 +
-            Math.cos(deg2rad(a.latitude)) *
-              Math.cos(deg2rad(b.latitude)) *
-              s2 *
-              s2,
-        ),
-      );
-    return R * c;
-  };
-
-  const computePerLegMinutes = (
-    stops: Coordinate[],
-    totalMinutes: number,
-  ): number[] => {
-    if (!stops || stops.length < 2 || totalMinutes <= 0) return [];
-    const legs = stops.length - 1;
-    const distances = Array.from({ length: legs }, (_, i) =>
-      haversineKm(stops[i], stops[i + 1]),
-    );
-    const totalKm = distances.reduce((sum, d) => sum + d, 0);
-    if (totalKm <= 0) return Array(legs).fill(Math.round(totalMinutes / legs));
-    return distances.map(d =>
-      Math.max(1, Math.round((d / totalKm) * totalMinutes)),
-    );
-  };
 
   const renderList = () => (
+
     <ScrollView style={styles.detailsScroll}
     contentContainerStyle={{ paddingBottom:10 }}
     showsVerticalScrollIndicator={true}>
@@ -122,10 +54,10 @@ export default function RoutesMenu({
             key={r.id}
             style={styles.item}
             onPress={() => {
-              setSelected(r);
-              onModeChange?.(true);
-              onRouteSelect?.(r.stops || []);
-              if (_collapsed) onToggle?.();
+              console.log('RoutesMenu onPress', { id: r.id, collapsed: _collapsed });
+              _onRouteSelect?.(r?.stops || []);
+              onSelectRoute?.(r);
+              _onModeChange?.(true);
             }}
           >
             <View style={styles.itemLeft}>
@@ -138,21 +70,19 @@ export default function RoutesMenu({
                 />
                 <Text style={styles.itemName}>{String((r as any).name ?? (r as any).Name ?? '').trim() || `Ruta ${idx + 1}`}</Text>
               </View>
-              {r.vehicle && <Text style={styles.itemSub}>{r.vehicle}</Text>}
             </View>
             <View style={styles.itemRight}>
               <Text style={styles.itemTime}>{r.time}</Text>
             </View>
           </TouchableOpacity>
         ))}
+
     </ScrollView>
   );
 
-  const orderedStops = React.useMemo(() => {
-    if (!selected) return [] as Coordinate[];
-    return selected.stops;
-  }, [selected]);
+  // Details are rendered by DetailRoutes component
 
+<<<<<<< HEAD
   React.useEffect(() => {
     const run = async () => {
       if (!selected || orderedStops.length === 0) return;
@@ -260,15 +190,19 @@ export default function RoutesMenu({
 };
 
   const headerTitle = selected ? null : title;
+=======
+  const headerTitle = title;
+>>>>>>> dev
 
   return (
     <View style={styles.container}>
       <View style={[styles.contentFrame, { flex: 1 }]}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>{headerTitle}</Text>
+        <Text style={styles.title}>{headerTitle}{!_selectedRoute && routes ? ` (${routes.length})` : ''}</Text>
       </View>
 
-      {selected ? renderDetails() : renderList()}
+
+      {renderList()}
 
       </View>
     </View>
@@ -278,6 +212,7 @@ export default function RoutesMenu({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
+
     flex: 1,
   },
   scroll: { 
@@ -295,14 +230,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1F1F1F',
   },
+
   list: { flex: 1 },
   detailsScroll: { flex: 1 },
   detailsHeader: { backgroundColor: '#FFFFFF', paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4 },
+  loadingBox: { paddingVertical: 16, alignItems: 'center', justifyContent: 'center' },
+  loadingText: { fontSize: 13, color: '#444', marginTop: 8 },
+
   item: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 15,
     borderBottomColor: '#F0F0F0',
+    borderBottomWidth: 1,
   },
   vehicleIcon: { marginRight: 10 },
   itemLeft: { flex: 1 },
@@ -350,8 +290,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  errorBox: { backgroundColor: '#FEF2F2', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 10, marginBottom: 8 },
+  errorText: { color: '#B91C1C', fontSize: 13 },
+  retryButton: { marginTop: 6, backgroundColor: '#5d01bc', paddingVertical: 6, borderRadius: 8, alignItems: 'center' },
+  retryText: { color: '#fff', fontSize: 13, fontWeight: '600' },
   contentFrame: {
     alignSelf: 'center',
     width: '100%',
   },
+  emptyBox: { paddingVertical: 20, alignItems: 'center' },
+  emptyText: { fontSize: 14, color: '#666' },
+  
+  summaryBox: { paddingVertical: 6, paddingHorizontal: 12 },
+  summaryText: { fontSize: 12, color: '#374151' },
 });
+
