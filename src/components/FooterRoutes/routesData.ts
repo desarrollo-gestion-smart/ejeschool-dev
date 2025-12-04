@@ -31,6 +31,10 @@ export type RouteData = {
   stops: (Coordinate & { student?: string } & { Directions?: string })[];
   info?: StudentInfo[];
   distanceKm?: number;
+<<<<<<< HEAD
+=======
+  companyId?: number;
+>>>>>>> pruebas/dev
 };
 
 

@@ -191,7 +191,7 @@ export default function RoutesMenu({
     <ScrollView style={styles.detailsScroll}
     contentContainerStyle={{ paddingBottom:10 }}
     showsVerticalScrollIndicator={true}>
-        {routes.map(r => (
+        {routes.map((r, idx) => (
           <TouchableOpacity
             key={r.id}
             style={styles.item}
@@ -210,7 +210,11 @@ export default function RoutesMenu({
                   fill="#6D28D9"
                   style={styles.vehicleIcon}
                 />
+<<<<<<< HEAD
                 <Text style={styles.itemName}>{r.name}</Text>
+>>>>>>> pruebas/dev
+=======
+                <Text style={styles.itemName}>{String((r as any).name ?? (r as any).Name ?? '').trim() || `Ruta ${idx + 1}`}</Text>
 >>>>>>> pruebas/dev
               </View>
             <View style={styles.itemRight}>
