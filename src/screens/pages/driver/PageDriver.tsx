@@ -20,7 +20,7 @@ import MapComponent from '../../../components/map/MapComponent';
 import TopBar from '../../../components/map/layout/TopBar';
 import MenuRoutes from '../../../components/map/layout/MenuRoutes';
 import RoutesMenu from '../../../components/FooterRoutes/RenderRoutes';
-import { routes } from '../../../components/FooterRoutes/routesData';
+import { routes, RouteData } from '../../../components/FooterRoutes/routesData';
 import api, { getAuthToken } from '../../../api/base';
 import { logout } from '../../../api/auth';
 import VehicleListModal from './components/VehicleListModal';
@@ -61,6 +61,8 @@ function PageDriver() {
   const [selectedVehicleColor, setSelectedVehicleColor] = React.useState<string>('');
   const [selectedVehicleId, setSelectedVehicleId] = React.useState<string | number | undefined>();
   const [selectedDriverCoord, setSelectedDriverCoord] = React.useState<{ latitude: number; longitude: number } | undefined>();
+  const [routesApi, setRoutesApi] = React.useState<RouteData[]>(routes);
+  const [companyId, setCompanyId] = React.useState<number | undefined>(undefined);
 
   const [vehiclesOpen, setVehiclesOpen] = React.useState(false);
   const [exitOpen, setExitOpen] = React.useState(false);
@@ -98,6 +100,9 @@ function PageDriver() {
 
         setDriverName(name);
         if (avatar) setDriverAvatar(avatar);
+        const cid = user?.company_id ?? user?.companyId ?? user?.company;
+        if (cid != null) setCompanyId(Number(cid));
+        
       } catch (err) {
         console.log('Error leyendo session.json:', err);
         setDriverName('Error de sesión');
@@ -105,6 +110,38 @@ function PageDriver() {
     };
 
     loadUserFromSession();
+  }, []);
+
+  React.useEffect(() => {
+    const loadRoutes = async () => {
+      try {
+        const token = getAuthToken();
+        const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+        const res = await api.get('/travels/v1/routes', { headers });
+        const payload = res.data;
+        const data = Array.isArray(payload) ? payload : (payload?.data || payload?.routes || []);
+        const mapped: RouteData[] = (Array.isArray(data) ? data : []).map((r: any) => {
+          const secs = Number(r?.estimated_travel_time_seconds ?? r?.estimated_driving_time_seconds ?? 0);
+          const mins = Math.max(1, Math.round(secs / 60));
+          const stops = Array.isArray(r?.stops)
+            ? r.stops.map((s: any) => ({ latitude: Number(s?.latitude), longitude: Number(s?.longitude), address: String(s?.address || '') }))
+            : [];
+          return {
+            id: Number(r?.id),
+            name: String(r?.name ?? r?.Name ?? ''),
+            vehicle: String(r?.vehicle?.plate ?? r?.vehicle_plate ?? r?.plate ?? r?.vehicle_name ?? ''),
+            time: `${mins} min`,
+            type: 'Entrada',
+            stops,
+            companyId: r?.company_id != null ? Number(r?.company_id) : undefined,
+          } as RouteData;
+        });
+        setRoutesApi(mapped.length > 0 ? mapped : routes);
+      } catch {
+        setRoutesApi(routes);
+      }
+    };
+    loadRoutes();
   }, []);
 
   // Geolocalización
@@ -178,7 +215,8 @@ function PageDriver() {
   const bottomContent = React.useCallback(({ collapsed, toggle, onRouteSelect, onModeChange }: BottomArgs) => (
     <MenuRoutes>
       <RoutesMenu
-        routes={routes}
+        key={`routes-${companyId ?? 'none'}`}
+        routes={routesApi}
         collapsed={collapsed}
         onToggle={toggle}
         onRouteSelect={onRouteSelect}
@@ -188,7 +226,7 @@ function PageDriver() {
         }}
       />
     </MenuRoutes>
-  ), []);
+  ), [routesApi, companyId]);
 
   const TopBarWithCard = React.useMemo(() => (
     !isDetails ? (
