@@ -58,8 +58,8 @@ const conciseRoutes: RouteData[] = [
       { latitude: -34.60250, longitude: -58.38080, Directions: 'Recogida en curso',  student: 'Mateo López' },
       // Waypoint 2
       { latitude: -34.60180, longitude: -58.38040, Directions: 'Colegio NSR',  student: 'Sofía Martínez' },      
-      // Destin
-      { latitude: -34.59970, longitude: -58.38115, Directions: 'Destino Final',  student: 'Mateo L.', status: 'red' }, 
+      // Destino
+      { latitude: -34.59970, longitude: -58.38115, Directions: 'Destino Final',  student: 'Mateo L.' }, 
       // Puntos de Status (adicionales, no forzan la ruta)
       { latitude: -34.60420, longitude: -58.38230, status: 'red', name: 'Monica Santa Alcina', nameRol: 'Conductor' },
       { latitude: -34.60120, longitude: -58.38010, status: 'green', name: 'Juan hernandes de la cruz', nameRol: 'Estudiante' },
@@ -106,10 +106,6 @@ const conciseRoutes: RouteData[] = [
     stops: [
       // Origen
       { latitude: -34.58805, longitude: -58.39060, name: 'Origen Palermo' },
-      // Waypoint 1
-      { latitude: -34.59240, longitude: -58.39150, name: 'Parada A' },
-      // Waypoint 2
-      { latitude: -34.59660, longitude: -58.39020, name: 'Parada B' },
       // Destino
       { latitude: -34.59895, longitude: -58.38730, name: 'Destino Derecho' },
       // Puntos de Status (adicionales, no forzan la ruta)

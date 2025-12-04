@@ -1,15 +1,9 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  FlatList,
-} from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, FlatList, BackHandler, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native'; 
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import routesData from '../../../components/FooterRoutes/routesData';
+import { logout } from '../../../api/auth';
 
 
 type RootStackParamList = {
@@ -119,6 +113,16 @@ const EjeSchoolComponent: React.FC = () => {
     console.log('Abrir modal/pantalla para agregar estudiante.');
   };
 
+  const [exitOpen, setExitOpen] = React.useState(false);
+  React.useEffect(() => {
+    const onBack = () => {
+      setExitOpen(true);
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBack);
+    return () => sub.remove();
+  }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -128,6 +132,22 @@ const EjeSchoolComponent: React.FC = () => {
       <StudentListSection />
 
       <AddStudentButton onAddStudentPress={handleAddStudent} />
+      <Modal transparent visible={exitOpen} animationType="fade" onRequestClose={() => setExitOpen(false)}>
+        <View style={styles.exitOverlay}>
+          <View style={styles.exitCard}>
+            <TouchableOpacity style={styles.exitClose} onPress={() => setExitOpen(false)}>
+              <Text style={styles.exitCloseText}>×</Text>
+            </TouchableOpacity>
+            <Text style={styles.exitTitle}>¿Qué deseas hacer?</Text>
+            <TouchableOpacity style={styles.exitPrimary} onPress={async () => { try { await logout(); } catch {} setExitOpen(false); }}>
+              <Text style={styles.exitPrimaryText}>Cerrar sesión</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.exitSecondary} onPress={() => BackHandler.exitApp()}>
+              <Text style={styles.exitSecondaryText}>Salir</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -227,6 +247,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   actionButtonText: { color: '#fff', fontSize: 20, textAlign: 'center' },
+  exitOverlay: { flex: 1, backgroundColor: '#00000055', alignItems: 'center', justifyContent: 'center' },
+  exitCard: { width: '86%', maxWidth: 360, backgroundColor: '#fff', borderRadius: 12, padding: 16 },
+  exitClose: { position: 'absolute', top: 8, right: 8, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  exitCloseText: { fontSize: 22, color: '#888' },
+  exitTitle: { fontSize: 18, fontWeight: '700', color: '#1F1F1F', marginBottom: 16, paddingTop: 8 },
+  exitPrimary: { backgroundColor: '#5d01bc', paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginBottom: 10 },
+  exitPrimaryText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  exitSecondary: { backgroundColor: '#F3F4F6', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+  exitSecondaryText: { color: '#111827', fontSize: 16, fontWeight: '700' },
 });
 
 export default EjeSchoolComponent;

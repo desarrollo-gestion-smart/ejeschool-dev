@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import Config from 'react-native-config';
 // Importamos los tipos actualizados de routesData.ts (simulando que Coordinate tiene 'address')
 // Nota: 'Coordinate' debe ser exportado desde '../FooterRoutes/routesData'
 import { RouteData } from './routesData';
@@ -18,7 +19,7 @@ export type Coordinate = {
   address?: string; // <- CLAVE: Permite recibir la dirección
 };
 
-import VehicleIcon from '../../assets/vehicle.svg';
+import VehicleIcon from '../../assets/icons/car-black.svg';
 import MarkerOrigin from '../../assets/markers/marker-origin-own.svg';
 import MarkerDestination from '../../assets/markers/marker-destination.svg';
 
@@ -39,7 +40,11 @@ export default function RoutesMenu({
   onModeChange,
 }: Props) {
   const [selected, setSelected] = React.useState<RouteData | null>(null);
+<<<<<<< HEAD
   const [selectedDetailStops, setSelectedDetailStops] = React.useState<Coordinate[]>([]);
+=======
+  const [addressMap, setAddressMap] = React.useState<Record<string, string>>({});
+>>>>>>> pruebas/dev
 
   React.useEffect(() => {
     onModeChange?.(!!selected);
@@ -75,6 +80,29 @@ export default function RoutesMenu({
     const m = String(time).match(/(\d+(?:\.\d+)?)\s*min/i);
     return m ? Math.round(Number(m[1])) : 0;
   };
+
+  const getMapsApiKey = (): string => {
+    return (Config as any)?.GOOGLE_MAPS_API_KEY || (Config as any)?.Maps_API_KEY || '';
+  };
+
+  const getAddressFromCoordinates = React.useCallback(async (latitude: number, longitude: number): Promise<string> => {
+    const apiKey = getMapsApiKey();
+    if (!apiKey) return '';
+    try {
+      const resp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`);
+      const data = await resp.json();
+      if (data.status === 'OK' && data.results?.length > 0) {
+        const comps = Array.isArray(data.results[0].address_components) ? data.results[0].address_components : [];
+        const route = String((comps.find((c: any) => (c.types || []).includes('route'))?.long_name) || '').trim();
+        const number = String((comps.find((c: any) => (c.types || []).includes('street_number'))?.long_name) || '').trim();
+        const out = `${route}${route && number ? ' ' : ''}${number}`.trim();
+        return out;
+      }
+      return '';
+    } catch {
+      return '';
+    }
+  }, []);
 
   const deg2rad = (deg: number) => deg * (Math.PI / 180);
   const haversineKm = (a: Coordinate, b: Coordinate): number => {
@@ -114,6 +142,7 @@ export default function RoutesMenu({
   };
 
   const renderList = () => (
+<<<<<<< HEAD
     <ScrollView
       style={styles.listScroll}
       contentContainerStyle={styles.list}
@@ -158,11 +187,36 @@ export default function RoutesMenu({
                   const sub = r.vehicle || (typeof d === 'number' ? `${d.toFixed(2)} km` : '');
                   return sub ? <Text style={styles.itemSub}>{sub}</Text> : null;
                 })()}
+=======
+    <ScrollView style={styles.detailsScroll}
+    contentContainerStyle={{ paddingBottom:10 }}
+    showsVerticalScrollIndicator={true}>
+        {routes.map(r => (
+          <TouchableOpacity
+            key={r.id}
+            style={styles.item}
+            onPress={() => {
+              setSelected(r);
+              onModeChange?.(true);
+              onRouteSelect?.(r.stops || []);
+              if (_collapsed) onToggle?.();
+            }}
+          >
+            <View style={styles.itemLeft}>
+              <View style={styles.nameRow}>
+                <VehicleIcon
+                  width={52}
+                  height={18}
+                  fill="#6D28D9"
+                  style={styles.vehicleIcon}
+                />
+                <Text style={styles.itemName}>{r.name}</Text>
+>>>>>>> pruebas/dev
               </View>
             <View style={styles.itemRight}>
               <Text style={styles.itemTime}>{r.time}</Text>
-              <Text style={styles.itemType}>{r.type}</Text>
             </View>
+<<<<<<< HEAD
             </TouchableOpacity>
           ))}
         </View>
@@ -171,26 +225,73 @@ export default function RoutesMenu({
           <Text style={styles.emptyText}>Sin rutas disponibles</Text>
         </View>
       )}
+=======
+          </TouchableOpacity>
+        ))}
+>>>>>>> pruebas/dev
     </ScrollView>
   );
+
+  const orderedStops = React.useMemo(() => {
+    if (!selected) return [] as Coordinate[];
+    return selected.stops;
+  }, [selected]);
+
+  React.useEffect(() => {
+    const run = async () => {
+      if (!selected || orderedStops.length === 0) return;
+      const pairs = await Promise.all(
+        orderedStops.map(async (c, idx) => {
+          const addr = await getAddressFromCoordinates(c.latitude, c.longitude);
+          const fallback = c.address ? String(c.address).split(',')[0].trim() : '';
+          return [`${selected.id}-${idx}`, addr || fallback];
+        })
+      );
+      const next: Record<string, string> = {};
+      for (const [k, v] of pairs) {
+        if (v) next[k as string] = v as string;
+      }
+      setAddressMap(prev => ({ ...prev, ...next }));
+    };
+    run();
+  }, [selected, orderedStops, getAddressFromCoordinates]);
 
   const renderDetails = () => {
   if (!selected) return null;
   const totalMin = parseMinutes(selected.time);
+<<<<<<< HEAD
   const detailBase = selectedDetailStops;
   const base = detailBase.length > 0 ? detailBase : selected.stops.filter(s => !s.status);
   const routeStops = base.length >= 2 ? base : base;
   const perLeg = computePerLegMinutes(routeStops, totalMin);
+=======
+  const perLeg = computePerLegMinutes(orderedStops, totalMin);
+>>>>>>> pruebas/dev
 
   let remaining = totalMin;
 
   return (
+<<<<<<< HEAD
     <ScrollView style={styles.detailsScroll} showsVerticalScrollIndicator={true} contentContainerStyle={styles.container}>
       <>
         {routeStops.map((c, routeIdx) => {
           const isFirst = routeIdx === 0;
           const isLast = routeIdx === routeStops.length - 1;
           const stopTitle = c.name || (selected.students?.[routeIdx] || `Punto ${routeIdx + 1}`);
+=======
+    <ScrollView
+      showsVerticalScrollIndicator={true}
+      style={styles.detailsScroll}
+    >
+        {orderedStops.map((c, routeIdx) => {
+          const isFirst = routeIdx === 0;
+          const isLast = routeIdx === orderedStops.length - 1;
+          const stopTitle = isFirst
+            ? (selected.students?.[routeIdx] || `Punto ${routeIdx + 1}`)
+            : isLast
+              ? (c.name || 'Destino')
+              : (c.name || `Punto ${routeIdx + 1}`);
+>>>>>>> pruebas/dev
           const legMin = routeIdx < perLeg.length ? perLeg[routeIdx] : 0;
           remaining = !isLast ? Math.max(0, remaining - legMin) : remaining;
 
@@ -203,25 +304,25 @@ export default function RoutesMenu({
                     <MarkerOrigin width={22} height={22} fill="#2563EB" stroke="#fff" strokeWidth={2.5} />
                   ) : isLast ? (
                     <MarkerDestination width={23} height={23} fill="#2563EB" color="#2563EB" />
-                  ) : c.status === 'red' ? (
-                    <MarkerOrigin width={22} height={22} fill="#EF4444" stroke="#fff" strokeWidth={2.5} />
                   ) : c.status === 'green' ? (
                     <MarkerOrigin width={22} height={22} fill="#10B981" stroke="#fff" strokeWidth={2.5} />
                   ) : (
-                    <MarkerOrigin width={22} height={22} fill="#000" stroke="#fff" strokeWidth={2.5} />
+                    <MarkerOrigin width={22} height={22} fill="#EF4444" stroke="#fff" strokeWidth={2.5} />
                   )}
                   {!isLast && <View style={styles.connectorBottom} />}
                 </View>
                 <View style={styles.stopTextCol}>
                   <Text style={styles.stopCoord}>
-                    {c.address || `${c.latitude.toFixed(3)}, ${c.longitude.toFixed(3)}`}
-                    
+                    {addressMap[`${selected.id}-${routeIdx}`] || c.address || ''}
                   </Text>
                   <Text style={styles.stopTitle}>{stopTitle}</Text>
 
                 </View>
               </View>
+<<<<<<< HEAD
                 <View />    
+=======
+>>>>>>> pruebas/dev
 
 
 
@@ -230,7 +331,7 @@ export default function RoutesMenu({
             </View>
           );
         })}
-
+        <View style={styles.detailsHeader}>
         <TouchableOpacity
           style={styles.finalizeButton}
           onPress={() => {
@@ -241,7 +342,7 @@ export default function RoutesMenu({
         >
           <Text style={styles.finalizeButtonText}>Finalizar ruta</Text>
         </TouchableOpacity>
-      </>
+      </View>
     </ScrollView>
   );
 };
@@ -250,10 +351,11 @@ export default function RoutesMenu({
 
   return (
     <View style={styles.container}>
-      <View style={styles.contentFrame}>
+      <View style={[styles.contentFrame, { flex: 1 }]}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>{headerTitle}{!selected && routes ? ` (${routes.length})` : ''}</Text>
       </View>
+<<<<<<< HEAD
       {!selected && routes && routes.length > 0 ? (
         <View style={styles.summaryBox}>
           {routes.map(r => (
@@ -262,7 +364,11 @@ export default function RoutesMenu({
         </View>
       ) : null}
       
+=======
+
+>>>>>>> pruebas/dev
       {selected ? renderDetails() : renderList()}
+
       </View>
     </View>
   );
@@ -271,22 +377,38 @@ export default function RoutesMenu({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
+<<<<<<< HEAD
     minHeight: 120,
     backgroundColor: '#FFFFFF',
+=======
+    flex: 1,
+>>>>>>> pruebas/dev
   },
+  scroll: { 
+    flex: 1,
+
+   },
   headerRow: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: 12,
+    backgroundColor: 'transparent',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
   },
   title: {
     fontSize: 17,
     fontWeight: '600',
     color: '#1F1F1F',
   },
+<<<<<<< HEAD
   list: {},
   listScroll: { flex: 1 },
   detailsScroll: { flex: 1 },
   detailsContent: {flex: 1,},
+=======
+  list: { flex: 1 },
+  detailsScroll: { flex: 1 },
+  detailsHeader: { backgroundColor: '#FFFFFF', paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4 },
+>>>>>>> pruebas/dev
   item: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -308,7 +430,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F0F0F0',
   },
   stopLeft: { flexDirection: 'row', flex: 1, alignItems: 'center' },
-  stopIconCol: { width: 24, alignItems: 'center', position: 'relative' },
+  stopIconCol: { width: 24, alignItems: 'center', },
   connectorTop: {
     position: 'absolute',
     top: -12,
@@ -327,9 +449,9 @@ const styles = StyleSheet.create({
   stopTitle: { fontSize: 14, fontWeight: '600', color: '#222', marginBottom: 4, paddingBottom: 5 },
   stopCoord: { fontSize: 11, color: '#888',  },
 
- finalizeButton: {
+  finalizeButton: {
     backgroundColor: '#5d01bc',
-    marginTop: 5,
+    marginTop: 0,
     paddingVertical: 7,
     borderRadius: 8,
     alignItems: 'center',

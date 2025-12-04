@@ -53,7 +53,7 @@ export default function LoginDriver() {
     setIsLoading(true);
     try {
       console.log('LoginDriver request', { endpoint: '/auth/login', email, password: '***' });
-      const res = await login({ email, password });
+      const res = await login({ email, password, role: 'driver' });
       console.log('LoginDriver response', res);
       const token = (res as any)?.api_token || (res as any)?.token;
       if (token) {

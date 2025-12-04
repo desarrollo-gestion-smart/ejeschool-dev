@@ -11,6 +11,7 @@ import MarkerOrigin from '../../assets/markers/marker-origin.svg';
 import MarkerDestination from '../../assets/markers/makerr-destination-own.svg';
 import type { Coordinate } from '../FooterRoutes/routesData';
 import MarkerMe from '../../assets/markers/waypoint.svg';
+import SvgIcon from '../SvgIcon';
 const CarSport = require('../../assets/icons/carro-deportivo.png');
 
 type MarkerItem = {
@@ -109,7 +110,7 @@ export default function MapComponent({
   const [_routeCoords, _setRouteCoords] = React.useState<Coordinate[]>([]);
   const [collapsed, setCollapsed] = React.useState(true);
   const [isFollowing, setIsFollowing] = React.useState(false);
-  const waypointColors = ['#3B82F6', '#10B981', '#EF4444'];
+  const waypointColors = [ '#10B981', '#EF4444'];
   const googleApiKey = getMapsApiKey();
   const [userLocation, setUserLocation] = React.useState<Coordinate | null>(null);
   const userLocationRef = React.useRef<Coordinate | null>(null);
@@ -187,6 +188,7 @@ export default function MapComponent({
         _err => { console.log('MapComponent getCurrentPosition error', _err); },
         { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
       );
+<<<<<<< HEAD
       setTimeout(() => {
         if (!userLocationRef.current) {
           Geolocation.getCurrentPosition(
@@ -224,12 +226,20 @@ export default function MapComponent({
           );
         }
       }, 12500);
+=======
+>>>>>>> pruebas/dev
     };
     init();
   }, []);
 
-  // Escucha la ubicación siempre
+  const isRouteActive = React.useMemo(() => {
+    const o = activeRoute.origin ?? origin;
+    const d = activeRoute.destination ?? destination;
+    return !!(o && d);
+  }, [activeRoute, origin, destination]);
+
   React.useEffect(() => {
+<<<<<<< HEAD
     const watchId = Geolocation.watchPosition(
       pos => {
         console.log('MapComponent watchPosition', pos?.coords);
@@ -245,13 +255,63 @@ export default function MapComponent({
       _err => { console.log('MapComponent watchPosition error', _err); },
       { enableHighAccuracy: true, distanceFilter: 0, interval: 3000 }
     );
+=======
+    let watchId: any = null;
+    let intervalId: any = null;
+        // @ts-ignore
+    const updateFromPosition = (pos: Geolocation.GeoPosition) => {
+      const { latitude, longitude } = pos.coords as any;
+      const coord = { latitude, longitude };
+      setUserLocation(coord);
+      userLocationRef.current = coord;
+      setShowUserDot(false);
+      if (!hasInitialCenterRef.current) {
+        hasInitialCenterRef.current = true;
+        mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 600);
+      }
+    };
+
+    const startLowFrequency = () => {
+      Geolocation.getCurrentPosition(
+        p => updateFromPosition(p as any),
+        e => console.log('MapComponent low-frequency error', e),
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+      );
+      intervalId = setInterval(() => {
+        Geolocation.getCurrentPosition(
+          p => updateFromPosition(p as any),
+          e => console.log('MapComponent low-frequency interval error', e),
+          { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+        );
+      }, 600000);
+    };
+
+    const startHighFrequency = () => {
+      watchId = Geolocation.watchPosition(
+        p => updateFromPosition(p as any),
+        e => console.log('MapComponent high-frequency watch error', e),
+        { enableHighAccuracy: true, distanceFilter: 0, interval: 3000 }
+      );
+    };
+
+    if (isRouteActive) {
+      startHighFrequency();
+    } else {
+      startLowFrequency();
+    }
+>>>>>>> pruebas/dev
 
     return () => {
-      Geolocation.clearWatch(watchId);
+      if (watchId !== null) Geolocation.clearWatch(watchId);
+      if (intervalId !== null) clearInterval(intervalId as any);
     };
+<<<<<<< HEAD
   }, []);
 
   
+=======
+  }, [isRouteActive]);
+>>>>>>> pruebas/dev
 
   React.useEffect(() => {}, [driverDeviceId]);
 
@@ -297,7 +357,6 @@ export default function MapComponent({
       const enrichedStops = await Promise.all(geocodingPromises);
 
       const primaryRouteStops = enrichedStops.filter(s => !s.status);
-      const extraStops = enrichedStops.filter(s => !!s.status);
 
       if (primaryRouteStops.length < 2) {
         setActiveRoute({});
@@ -313,10 +372,8 @@ export default function MapComponent({
       setActiveRoute({ origin: originStop, destination: destinationStop, waypoints: wp });
 
       const nextMarkers: MarkerItem[] = [
-        { id: 1, title: originStop.name || originStop.address || 'Origen', coordinate: originStop, type: 'origin' },
-        ...wp.map((c, i) => ({ id: 100 + i, title: c.name || c.address || `Punto ${i + 1}`, coordinate: c, type: 'waypoint' as const })),
-        { id: 2, title: destinationStop.name || destinationStop.address || 'Destino', coordinate: destinationStop, type: 'destination' },
-        ...extraStops.map((c, i) => ({ id: 200 + i, title: c.name || c.address || (c.status === 'red' ? 'Conductor' : 'Punto'), coordinate: c, type: 'waypoint' as const })),
+        ...wp.map((c, i) => ({ id: 100 + i, title: c.name || c.address || `Punto ${i + 1}`, coordinate: c, type: 'waypoint' as const, status: c.status })),
+        { id: 2, title: destinationStop.name || destinationStop.address || 'Destino', coordinate: destinationStop, type: 'destination', status: destinationStop.status },
       ];
 
       setRouteStopMarkers(nextMarkers);
@@ -385,6 +442,7 @@ export default function MapComponent({
           <Marker key={m.id} coordinate={m.coordinate} title={m.title} />
         ))}
 
+<<<<<<< HEAD
         {userLocation && (
           <Marker
             coordinate={userLocation as Coordinate}
@@ -392,6 +450,10 @@ export default function MapComponent({
             tracksViewChanges={true}
             zIndex={999}
           >
+=======
+        {(_driver ?? userLocation) && (
+          <Marker coordinate={(_driver ?? userLocation) as Coordinate} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
+>>>>>>> pruebas/dev
             <Image source={CarSport} style={[styles.carMarker, driverIconColor ? { tintColor: driverIconColor } : null]} />
           </Marker>
         )}
@@ -403,11 +465,8 @@ export default function MapComponent({
             title={marker.title}
             anchor={{ x: 0.5, y: 0.5 }}
             tracksViewChanges={false}
-            onPress={() => setCollapsed(false)}
           >
-            {marker.type === 'origin' ? (
-              <MarkerOrigin width={24} height={24} color="#2563EB" />
-            ) : marker.type === 'destination' ? (
+            { marker.type === 'destination' ? (
               <MarkerDestination width={30} height={50} fill="#2563EB" color="#2563EB" />
             ) : marker.nameRol === 'conductor' ? (
               <MarkerMe width={22} height={22} fill="#000" />
@@ -415,21 +474,21 @@ export default function MapComponent({
               <MarkerOrigin
                 width={22}
                 height={22}
-                color={waypointColors[Math.max(0, (idx - 1) % waypointColors.length)]}
+                fill ={(marker.status === 'green') ? '#10B981' : '#EF4444'}
               />
             )}
           </Marker>
         ))}
 
-        {directionsData.o && directionsData.d && directionsData.googleKey ? (
+        {(userLocation || directionsData.o) && directionsData.d && directionsData.googleKey ? (
           <MapViewDirections
-            origin={directionsData.o}
+            origin={userLocation ?? directionsData.o}
             destination={directionsData.d}
             waypoints={directionsData.w}
             apikey={directionsData.googleKey as string}
             strokeWidth={5}
             strokeColor="#707070"
-            optimizeWaypoints
+            resetOnChange={false}
             mode="DRIVING"
             onReady={() => {}}
             onError={_errorMessage => {
@@ -546,7 +605,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     zIndex: 100,
   },
-  aimstyles: { width: 28, height: 28, tintColor: '#000' },
+  aimstyles: { width: 28, height: 28, tintColor: '#707070' },
   reportsButtonContainer: { position: 'absolute', zIndex: 30 },
   reportsButton: { backgroundColor: '#6D28D9', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8 },
   reportsButtonText: { color: '#fff', fontSize: 12, fontWeight: '600' },

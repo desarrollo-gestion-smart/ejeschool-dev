@@ -1,19 +1,21 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import type { RootStackParamList } from '../../../types/Navigation';
 import LessIcon from '../../../assets/icons/lessthen.svg';
 export default function ChatSupport() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const route = useRoute<RouteProp<RootStackParamList, 'ChatSupport'>>();
   const [input, setInput] = useState('');
-  const currentUser = 'padre';
+  const currentUser = route?.params?.userRole || 'padre';
   const initialMessages = useMemo(() => ([
-    { id: '1', from: 'padre', text: 'Hola, ¿estás cerca?', time: new Date() },
-    { id: '2', from: 'soporte', text: "Estoy en unos minutos", time: new Date() },
-    { id: '3', from: 'padre', text: 'OK, estoy esperando en Vinmark Store', time: new Date() },
-    { id: '4', from: 'soporte', text: "Lo siento, me encuentro en tráfico. Por favor, déjame un momento.", time: new Date() },
-  ]), []);
+    { id: '1', from: currentUser, text: 'Hola, ¿estás cerca?', time: new Date() },
+    { id: '2', from: currentUser === 'padre' ? 'conductor' : 'padre', text: 'Estoy en unos minutos', time: new Date() },
+    { id: '3', from: currentUser, text: 'OK, estoy esperando en Vinmark Store', time: new Date() },
+    { id: '4', from: currentUser === 'padre' ? 'conductor' : 'padre', text: 'Lo siento, me encuentro en tráfico. Por favor, déjame un momento.', time: new Date() },
+  ]), [currentUser]);
   const [messages, setMessages] = useState(initialMessages);
   const listRef = useRef<FlatList<any>>(null);
   const send = () => {
@@ -35,8 +37,8 @@ export default function ChatSupport() {
           </TouchableOpacity>
 
         <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Gregory Smith</Text>
-          <Image style={styles.avatarImg} source={{ uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=64&h=64&fit=crop' }} />
+          <Text style={styles.headerTitle}>{route?.params?.recipientName || 'Contacto'}</Text>
+          <Image style={styles.avatarImg} source={{ uri: route?.params?.recipientAvatar || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=64&h=64&fit=crop' }} />
         </View>
         </View>
       </View>

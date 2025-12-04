@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Modal,
   FlatList,
   TextInput,
   Alert,
@@ -14,7 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack'; // 👈 Importación clave para 'replace'
-
+import LowArrowIcon from '../../../../assets/icons/lowarrow.svg';
 // --- DEFINICIÓN DE TIPOS CORREGIDA ---
 // 1. Define tus rutas. El nombre 'PageDriver' debe coincidir con tu Navigator.
 type RootStackParamList = {
@@ -30,10 +29,10 @@ type DriverStackNavigationProps = StackNavigationProp<
 // -------------------------------------
 
 const VEHICLES = [
-  { id: '1', label: 'Bus 01 - ABC 123' },
-  { id: '2', label: 'Bus 02 - DEF 456' },
-  { id: '3', label: 'Van 01 - GHI 789' },
-  { id: '4', label: 'Van 02 - JKL 012' },
+  { id: '1', label: 'chevrolet Silverado' },
+  { id: '2', label: 'Ford EcoSport' },
+  { id: '3', label: 'Fiat 100' },
+  { id: '4', label: 'Renault Oroch ' },
 ];
 
 export default function VehicleVerificationScreen() {
@@ -42,53 +41,37 @@ export default function VehicleVerificationScreen() {
   const navigation = useNavigation<DriverStackNavigationProps>();
 
   const [selectedVehicle, setSelectedVehicle] = useState<string>('');
-  const [modalVisible, setModalVisible] = useState(false);
+  const [listOpen, setListOpen] = useState(false);
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
   const handleVerify = async () => {
-    if (!selectedVehicle || code.length < 6) {
-      Alert.alert(
-        'Error',
-        'Debes seleccionar un vehículo y digitar el código completo',
-      );
+    if (!selectedVehicle) {
+      Alert.alert('Debes seleccionar un vehículo para verificar');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // 🚀 1. SIMULACIÓN DEL "MÍNIMO RELOAD" (Llamada a API/Validación)
-      console.log(`Validando vehículo: ${selectedVehicle} con código: ${code}`);
-
-      // Simula 2 segundos de carga. Esta sintaxis resuelve el Error 2345.
-      await new Promise(resolve => setTimeout(() => resolve(undefined), 2000));
-
-      // La validación fue exitosa:
-      // ➡️ 2. REDIRECCIÓN A PageDriver.tsx
-      // Usamos replace() para que el usuario no pueda volver a esta pantalla.
+      console.log(`Validando vehículo: ${selectedVehicle}`);
       navigation.replace('PageDriver');
     } catch (error) {
       console.error('Error de validación:', error);
-      Alert.alert(
-        'Error de Verificación',
-        'El código o vehículo no son válidos. Intente de nuevo.',
-      );
-      setCode('');
+      Alert.alert('Error de Verificación', 'Intente de nuevo');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const isButtonDisabled = !selectedVehicle || code.length < 6 || isLoading;
+  const isButtonDisabled = !selectedVehicle || isLoading;
 
   return (
     <View
       style={[
         styles.container,
         {
-          // Aplicación de insets
           paddingTop:
             insets.top +
             (Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0),
@@ -98,13 +81,14 @@ export default function VehicleVerificationScreen() {
         },
       ]}
     >
+      
+        <Text style={styles.title}>Seleccionar Vehículo</Text>
       {/* Contenido principal */}
       <View style={styles.content}>
-        <Text style={styles.title}>Seleccionar Vehículo</Text>
 
         <TouchableOpacity
           style={styles.selectContainer}
-          onPress={() => setModalVisible(true)}
+          onPress={() => setListOpen(v => !v)}
         >
           <Text
             style={[
@@ -114,40 +98,32 @@ export default function VehicleVerificationScreen() {
           >
             {selectedVehicle || 'Seleccionar Vehículo'}
           </Text>
-          {/* icon */}
+          <LowArrowIcon width={20} height={24} color="#000" fill="#000" style={styles.selectIcon} />
         </TouchableOpacity>
 
-        <Text style={styles.instruction}>
-          Digite su código de verificación enviado por SMS
-        </Text>
-
-        <View
-          style={styles.codeWrapper}
-          onStartShouldSetResponder={() => true}
-          onResponderRelease={() => inputRef.current?.focus()}
-        >
-          <View style={styles.codeContainer} pointerEvents="none">
-            {[0, 1, 2, 3, 4, 5].map(index => (
-              <View key={index} style={styles.digitBox}>
-                <Text style={styles.digit}>
-                  {code.length > index ? code[index] : '•'}
-                </Text>
-              </View>
-            ))}
+        {listOpen && (
+          <View style={styles.listPanel}>
+            <Text style={styles.listTitle}></Text>
+            <FlatList
+              data={VEHICLES}
+              keyExtractor={item => item.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.listItem}
+                  onPress={() => {
+                    setSelectedVehicle(item.label);
+                    setListOpen(false);
+                  }}
+                >
+                  <Text style={styles.vehicleText}>{item.label}</Text>
+                </TouchableOpacity>
+              )}
+            />
+            <TouchableOpacity style={styles.listCancel} onPress={() => setListOpen(false)}>
+              <Text style={styles.cancelText}>Cancelar</Text>
+            </TouchableOpacity>
           </View>
-          <TextInput
-            ref={inputRef}
-            value={code}
-            onChangeText={text =>
-              setCode(text.replace(/[^0-9]/g, '').slice(0, 6))
-            }
-            keyboardType="number-pad"
-            textContentType="oneTimeCode"
-            maxLength={6}
-            style={styles.invisibleInput}
-            showSoftInputOnFocus={true}
-          />
-        </View>
+        )}
 
         <TouchableOpacity
           style={[
@@ -163,44 +139,7 @@ export default function VehicleVerificationScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Modal */}
-      <Modal
-        animationType="slide"
-        transparent
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Seleccionar Vehículo</Text>
-
-            <FlatList
-              data={VEHICLES}
-              keyExtractor={item => item.id}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.vehicleItem}
-                  onPress={() => {
-                    setSelectedVehicle(item.label);
-                    setCode('');
-                    setModalVisible(false);
-                    inputRef.current?.focus();
-                  }}
-                >
-                  <Text style={styles.vehicleText}>{item.label}</Text>
-                </TouchableOpacity>
-              )}
-            />
-
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.cancelText}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      
     </View>
   );
 }
@@ -217,30 +156,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 28,
+    position: 'absolute',
+    top: 0,
+    width: '100%',
+    flex: 1,
+    textAlign: 'center',
+    backgroundColor: '#6D28D9',
+    paddingVertical: 40,
+    fontSize: 30,
     fontWeight: 'bold',
-    color: '#6D28D9',
+    color: '#fff',
     marginBottom: 50,
+  },
+  lessIcon: {
+    marginLeft: 40,
+    color: '#888',
+    
   },
   selectContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ddd',
+    borderWidth: 2,
+    borderColor: '#242E42',
     borderRadius: 12,
     paddingHorizontal: 20,
-    paddingVertical: 18,
+    paddingVertical: 12,
     width: '100%',
-    marginBottom: 50,
+    marginBottom: 40,
   },
   selectText: {
     fontSize: 18,
     color: '#888',
+    flex: 1,
   },
   selectTextFilled: {
     color: '#000',
+  },
+  selectIcon: {
+    marginLeft: 12,
   },
   instruction: {
     fontSize: 17,
@@ -273,7 +228,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#6D28D9',
     paddingVertical: 16,
     paddingHorizontal: 50,
-    borderRadius: 30,
+    borderRadius: 20,
     marginTop: 60,
   },
   verifyButtonDisabled: {
@@ -292,34 +247,34 @@ const styles = StyleSheet.create({
     bottom: 0,
     opacity: 0,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
+  listPanel: {
+    width: '100%',
     backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: 20,
-    maxHeight: '70%',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 12,
+    maxHeight: 280,
+    marginTop: -50,
+    marginBottom: 32,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  listTitle: {
+    fontSize: 16,
+    fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 15,
+    marginBottom: 10,
+    color: '#111',
   },
-  vehicleItem: {
-    padding: 18,
+  listItem: {
+    paddingVertical: 14,
+    paddingHorizontal: 18,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
   vehicleText: {
     fontSize: 18,
   },
-  cancelButton: {
-    padding: 18,
+  listCancel: {
+    paddingVertical: 14,
     alignItems: 'center',
   },
   cancelText: {

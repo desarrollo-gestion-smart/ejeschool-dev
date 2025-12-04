@@ -10,16 +10,24 @@ import VehicleSvg from '../../../../../assets/vehicle.svg';
 const CarIcon = () => <VehicleSvg width={60} height={90} />;
 
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
-
+import Config from 'react-native-config';
+import { fetchDriverProfile, fetchStudentProfile } from '../../../../../api/driver';
 type RootParams = {
   DashboardFather: { studentName?: string; avatarUri?: string };
 };
 
-export default function CurrentTripDashboard() {
+type Variant = 'parent' | 'driver';
+
+export default function CurrentTripDashboard({ variant = 'parent' }: { variant?: Variant } = {}) {
   const routeParam = useRoute<RouteProp<RootParams, 'DashboardFather'>>();
   const studentName = routeParam?.params?.studentName;
   const avatarUri = routeParam?.params?.avatarUri;
   const navigation = useNavigation<any>();
+  const [driverName, setDriverName] = React.useState('');
+  const [driverPhoto, setDriverPhoto] = React.useState<string | undefined>(undefined);
+  const [parentPhone, setParentPhone] = React.useState('');
+  const [pickupStreet, setPickupStreet] = React.useState('');
+  const [aboard, setAboard] = React.useState(false);
 
   // Tomamos la primera ruta como ejemplo (puedes pasarla por props o usar estado global)
   const route =
@@ -42,41 +50,121 @@ export default function CurrentTripDashboard() {
         .includes('colegio nsr'),
     ) as any) || route.stops[route.stops.length - 1];
 
+  const pickupIdx = route.stops.findIndex(s => s.student === (pickup?.student as string));
+  const previous = pickupIdx > 0 ? (route.stops[pickupIdx - 1] as any) : undefined;
+  const driverPos = previous
+    ? { latitude: previous.latitude + 0.00012, longitude: previous.longitude + 0.00012 }
+    : { latitude: pickup.latitude + 0.00012, longitude: pickup.longitude + 0.00012 };
+
   // Simulamos distancia y tiempo (puedes calcularlo con MapViewDirections si quieres)
   const distance = '0.2 km';
   const duration = '2 min';
+  const getMapsApiKey = (): string => {
+    return (Config as any)?.GOOGLE_MAPS_API_KEY || (Config as any)?.Maps_API_KEY || '';
+  };
+  const getStreetName = React.useCallback(async (lat: number, lng: number): Promise<string> => {
+    const key = getMapsApiKey();
+    if (!key) return '';
+    try {
+      const resp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${key}`);
+      const data = await resp.json();
+      if (data.status === 'OK' && Array.isArray(data.results) && data.results.length > 0) {
+        const comps = Array.isArray(data.results[0].address_components) ? data.results[0].address_components : [];
+        const routeName = String((comps.find((c: any) => (c.types || []).includes('route'))?.long_name) || '').trim();
+        const number = String((comps.find((c: any) => (c.types || []).includes('street_number'))?.long_name) || '').trim();
+        return `${routeName}${routeName && number ? ' ' : ''}${number}`.trim();
+      }
+      return '';
+    } catch {
+      return '';
+    }
+  }, []);
+
+  React.useEffect(() => {
+    const run = async () => {
+      if (variant === 'driver') {
+        try {
+          const driver = await fetchDriverProfile();
+          setDriverName(driver.nombre);
+          setDriverPhoto(avatarUri);
+        } catch {}
+        try {
+          const student = await fetchStudentProfile();
+          setParentPhone(student.telefono);
+        } catch {}
+        try {
+          if (pickup?.latitude && pickup?.longitude) {
+            const street = await getStreetName(pickup.latitude, pickup.longitude);
+            setPickupStreet(street || String(pickup?.Directions || '').trim());
+          }
+        } catch {}
+      }
+    };
+    run();
+  }, [avatarUri, pickup, getStreetName, variant]);
   
 
   return (
     <View style={styles.container}>
-      <MapFather pickup={pickup} dropoff={dropoff} />
+      <MapFather pickup={pickup} dropoff={dropoff} previous={previous} driver={driverPos} />
 
       <View style={styles.bottomPanel}>
        
         <View style={styles.rowCenter}>
-          {avatarUri ? (
-            <Image source={{ uri: avatarUri }} style={styles.avatarSmall} />
-          ) : null}
+          {variant === 'driver' ? (
+            driverPhoto ? <Image source={{ uri: driverPhoto }} style={styles.avatarSmall} /> : null
+          ) : (
+            avatarUri ? <Image source={{ uri: avatarUri }} style={styles.avatarSmall} /> : null
+          )}
           <Text style={styles.pickupTitle}>
-            {pickup?.student || 'Nombre del estudiante'}
+            {variant === 'driver' ? (driverName || 'Conductor') : (pickup?.student || 'Nombre del estudiante')}
           </Text>
 
-          <TouchableOpacity style={styles.chatButton} onPress={() => navigation.navigate('ChatSupport')}>
+          <TouchableOpacity
+            style={styles.chatButton}
+            onPress={() =>
+              navigation.navigate('ChatSupport', {
+                userRole: variant === 'driver' ? 'conductor' : 'padre',
+                recipientName:
+                  variant === 'driver'
+                    ? `Padre de ${pickup?.student || 'estudiante'}`
+                    : (driverName || 'Conductor'),
+                recipientAvatar:
+                  variant === 'driver'
+                    ? undefined
+                    : (driverPhoto || undefined),
+              })
+            }
+          >
             <Text style={styles.chatButtonText}>💬</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.destinationRow}>
-          <MarkerOrigin
-            width={20}
-            height={20}
-            color="#10B981"
-            style={styles.inlineIcon}
-          />
-          <Text style={styles.pickupAddress}>
-            {pickup?.Directions || 'recogida en curso'}
-          </Text>
-        </View>
+        {variant === 'driver' ? (
+          <View style={styles.destinationRow}>
+            <MarkerOrigin
+              width={20}
+              height={20}
+              color="#10B981"
+              style={styles.inlineIcon}
+            />
+            <Text style={styles.pickupAddress}>
+              {pickupStreet || 'Calle de la parada'}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.destinationRow}>
+            <MarkerOrigin
+              width={20}
+              height={20}
+              color="#10B981"
+              style={styles.inlineIcon}
+            />
+            <Text style={styles.pickupAddress}>
+              {pickup?.Directions || 'recogida en curso'}
+            </Text>
+          </View>
+        )}
 
         <View style={styles.destinationRow}>
           <MarkerOrigin
@@ -89,6 +177,18 @@ export default function CurrentTripDashboard() {
             {dropoff.name || 'Colegio NSR'}
           </Text>
         </View>
+
+        {variant === 'driver' ? (
+          <View style={styles.destinationRow}>
+            <MarkerOrigin
+              width={20}
+              height={20}
+              color="#10B981"
+              style={styles.inlineIcon}
+            />
+            <Text style={styles.destinationText}>{parentPhone || '+54 11 0000-0000'}</Text>
+          </View>
+        ) : null}
 
         {/* Info de distancia y tiempo */}
         <View style={styles.infoRow}>
@@ -104,9 +204,29 @@ export default function CurrentTripDashboard() {
           </View>
         </View>
 
-        <ButtonContext onPress={() => console.log('Ruta cancelada')} />
+        {variant === 'driver' ? (
+          <ButtonContext
+            status={aboard ? 'boarded' : 'not_boarded'}
+            onPress={() => {
+              setAboard(v => {
+                const next = !v;
+                try {
+                  const idx = (route?.stops || []).findIndex(
+                    s => s.latitude === pickup?.latitude && s.longitude === pickup?.longitude,
+                  );
+                  if (idx >= 0) {
+                    (route.stops[idx] as any).status = next ? 'green' : 'red';
+                  }
+                } catch {}
+                return next;
+              });
+            }}
+          />
+        ) : (
+          <ButtonContext onPress={() => console.log('Ruta cancelada')} />
+        )}
       </View>
-     
+      
     </View>
   );
 }
