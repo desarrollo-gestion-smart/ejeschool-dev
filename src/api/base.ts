@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import Config from 'react-native-config';
 
 
-const BASE_URL = (Config as any)?.APP_URL || (Config as any)?.APP_url || '';
+const BASE_URL = (Config as any)?.APP_DEV || (Config as any)?.APP_URL || (Config as any)?.APP_url || '';
 
 const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,
