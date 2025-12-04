@@ -211,13 +211,11 @@ export default function RoutesMenu({
           return (
             <View key={`${selected.id}-${routeIdx}`} style={styles.stopRow}>
               <View style={styles.stopLeft}>
-                <View style={styles.stopAvatarCol}>
-                  <AvatarBadge size={26} backgroundColor={avatarColor} text={initials} textColor="#FFFFFF" />
-                </View>
+             
                 <View style={styles.stopIconCol}>
                   {!isFirst && <View style={styles.connectorTop} />}
                   {isFirst ? (
-                    <MarkerOrigin width={22} height={22} fill="#2563EB" stroke="#fff" strokeWidth={2.5} />
+                    <MarkerOrigin width={22} height={22} fill='#EF4444' stroke="#fff" strokeWidth={2.5} />
                   ) : isLast ? (
                     <MarkerDestination width={23} height={23} fill="#2563EB" color="#2563EB" />
                   ) : c.status === 'green' ? (
@@ -228,16 +226,25 @@ export default function RoutesMenu({
                   {!isLast && <View style={styles.connectorBottom} />}
                 </View>
                 <View style={styles.stopTextCol}>
-                  <Text style={styles.stopCoord}>
-                    {addressMap[`${selected.id}-${routeIdx}`] || c.address || ''}
-                  </Text>
-                  <Text style={styles.stopTitle}>{stopTitle}</Text>
-
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.stopCoord}>
+                        {addressMap[`${selected.id}-${routeIdx}`] || c.address || ''}
+                      </Text>
+                      <Text style={styles.stopTitle}>{stopTitle}</Text>
+                    </View>
+                    <AvatarBadge
+                      size={35}
+                      backgroundColor={avatarColor}
+                      text={initials}
+                      textColor="#FFFFFF"
+                      style={{ marginRight: 30 }}
+                    />
+                  </View>
                 </View>
+             
               </View>
-
-
-
 
 
             </View>
@@ -318,8 +325,9 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F0F0F0',
   },
   stopLeft: { flexDirection: 'row', flex: 1, alignItems: 'center' },
-  stopAvatarCol: { width: 28, alignItems: 'center' },
+  stopAvatarCol: {  alignItems: 'center', gap: 4 },
   stopIconCol: { width: 24, alignItems: 'center', },
+  
   connectorTop: {
     position: 'absolute',
     top: -12,

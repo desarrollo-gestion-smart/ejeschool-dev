@@ -39,6 +39,7 @@ type Props = {
   waypoints?: Coordinate[];
   driverIconColor?: string;
   driverDeviceId?: string | number;
+  lockOnDriver?: boolean;
 };
 
 const getMapsApiKey = (): string => {
@@ -81,6 +82,7 @@ export default function MapComponent({
   waypoints,
   driverIconColor,
   driverDeviceId,
+  lockOnDriver = true,
 }: Props) {
 
   const uberLightMapStyle = [
@@ -148,6 +150,7 @@ export default function MapComponent({
       ...(activeRoute.origin ? [activeRoute.origin] : origin ? [origin] : []),
       ...(activeRoute.waypoints || waypoints || []),
       ...(activeRoute.destination ? [activeRoute.destination] : destination ? [destination] : []),
+      ...(isFollowing && (_driver ?? userLocation) ? [(_driver ?? (userLocation as Coordinate))] : []),
     ].filter(Boolean) as Coordinate[];
 
     if (allPoints.length < 1) return;
@@ -163,14 +166,24 @@ export default function MapComponent({
     }
 
     mapRef.current?.fitToCoordinates(allPoints, {
-      edgePadding: { top: 200, right: 200, bottom: 100, left: 110 },
-      animated: true,
+  edgePadding: { top: 180, left: 80, bottom: 280, right: 80 },
     });
-  }, [activeRoute, origin, destination, waypoints]);
+  }, []);
 
   React.useEffect(() => {}, [routeCoords, fitToRoute, isFollowing]);
 
-  React.useEffect(() => {}, [_driver]);
+  React.useEffect(() => {
+    if (!lockOnDriver) return;
+    const c = _driver ?? userLocation;
+    if (c) {
+      mapRef.current?.animateToRegion({
+        latitude: c.latitude,
+        longitude: c.longitude,
+        latitudeDelta: 0.012,
+        longitudeDelta: 0.012,
+      }, 500);
+    }
+  }, [_driver, userLocation, lockOnDriver]);
 
   React.useEffect(() => {
     if (initialRegion && !userLocation) {
@@ -212,7 +225,7 @@ export default function MapComponent({
           setShowUserDot(false);
           if (!hasInitialCenterRef.current) {
             hasInitialCenterRef.current = true;
-            mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 600);
+            mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 200);
           }
         },
         _err => { console.log('MapComponent getCurrentPosition error', _err); },
@@ -322,24 +335,17 @@ export default function MapComponent({
 
       const enrichedStops = await Promise.all(geocodingPromises);
 
-      const primaryRouteStops = enrichedStops.filter(s => !s.status);
-
-      if (primaryRouteStops.length < 2) {
-        setActiveRoute({});
-        setRouteStopMarkers([]);
-        setRouteCoords([]);
-        return;
-      }
-
-      const originStop = primaryRouteStops[0];
-      const destinationStop = primaryRouteStops[primaryRouteStops.length - 1];
-      const wp = primaryRouteStops.slice(1, primaryRouteStops.length - 1);
+      const orderedStops = enrichedStops;
+      const originStop = orderedStops[0];
+      const destinationStop = orderedStops[orderedStops.length - 1];
+      const wp = orderedStops.slice(1, orderedStops.length - 1);
 
       setActiveRoute({ origin: originStop, destination: destinationStop, waypoints: wp });
 
       const nextMarkers: MarkerItem[] = [
-        ...wp.map((c, i) => ({ id: 100 + i, title: c.name || c.address || `Punto ${i + 1}`, coordinate: c, type: 'waypoint' as const, status: c.status })),
-        { id: 2, title: destinationStop.name || destinationStop.address || 'Destino', coordinate: destinationStop, type: 'destination', status: destinationStop.status },
+        { id: 1, title: originStop.name || originStop.address || 'Origen', coordinate: originStop, type: 'origin', status: originStop.status, nameRol: (originStop as any).nameRol },
+        ...wp.map((c, i) => ({ id: 100 + i, title: c.name || c.address || `Punto ${i + 1}`, coordinate: c, type: 'waypoint' as const, status: c.status, nameRol: (c as any).nameRol })),
+        { id: 2, title: destinationStop.name || destinationStop.address || 'Destino', coordinate: destinationStop, type: 'destination', status: destinationStop.status, nameRol: (destinationStop as any).nameRol },
       ];
 
       setRouteStopMarkers(nextMarkers);
@@ -357,6 +363,10 @@ export default function MapComponent({
     }
     setRouteCoords([o, ...(w ?? []), d]);
   }, [activeRoute, origin, destination, waypoints]);
+
+  React.useEffect(() => {
+    fitToRoute();
+  }, [routeCoords]);
 
   return (
     <View style={styles.container}>
@@ -386,7 +396,7 @@ export default function MapComponent({
                 latitudeDelta: 0.01,
                 longitudeDelta: 0.01,
               }, 400);
-            } else if (isFollowing) {
+            } else if (isFollowing && !lockOnDriver) {
               mapRef.current?.animateToRegion({
                 latitude,
                 longitude,
@@ -418,13 +428,17 @@ export default function MapComponent({
           >
             { marker.type === 'destination' ? (
               <MarkerDestination width={30} height={50} fill="#2563EB" color="#2563EB" />
-            ) : marker.nameRol === 'conductor' ? (
+            ) : (String((marker as any).nameRol || '').toLowerCase() === 'conductor') ? (
               <MarkerMe width={22} height={22} fill="#000" />
+            ) : marker.type === 'origin' ? (
+              <MarkerOrigin width={22} height={22}          
+               fill={(marker.status === 'green') ? '#10B981' : '#EF4444'}
+ />
             ) : (
               <MarkerOrigin
                 width={22}
                 height={22}
-                fill ={(marker.status === 'green') ? '#10B981' : '#EF4444'}
+                fill={(marker.status === 'green') ? '#10B981' : '#EF4444'}
               />
             )}
           </Marker>
@@ -440,7 +454,16 @@ export default function MapComponent({
             strokeColor="#707070"
             resetOnChange={false}
             mode="DRIVING"
-            onReady={() => {}}
+            onReady={(result) => {
+              if (lockOnDriver) return;
+              const coords = result?.coordinates || [];
+              if (coords.length > 0) {
+                mapRef.current?.fitToCoordinates(coords as any, {
+                  edgePadding: { top: 200, right: 200, bottom: 100, left: 110 },
+                  animated: true,
+                });
+              }
+            }}
             onError={_errorMessage => {
               Alert.alert('Ruta', 'No se pudo trazar la ruta con Google Directions');
             }}

@@ -144,13 +144,22 @@ export default function CurrentTripDashboard({
       } catch {}
       try {
         if (previous?.latitude && previous?.longitude) {
-          const street = await getStreetName(previous.latitude, previous.longitude);
-          setPreviousStreet(street || String(previous?.Directions || previous?.name || '').trim());
+          const street = await getStreetName(
+            previous.latitude,
+            previous.longitude,
+          );
+          setPreviousStreet(
+            street ||
+              String(previous?.Directions || previous?.name || '').trim(),
+          );
         }
       } catch {}
       try {
         if (dropoff?.latitude && dropoff?.longitude) {
-          const street = await getStreetName(dropoff.latitude, dropoff.longitude);
+          const street = await getStreetName(
+            dropoff.latitude,
+            dropoff.longitude,
+          );
           setDropoffStreet(street || String(dropoff?.name || '').trim());
         }
       } catch {}
@@ -191,8 +200,14 @@ export default function CurrentTripDashboard({
               <Image source={{ uri: driverPhoto }} style={styles.avatarSmall} />
             ) : null
           ) : avatarUri ? (
-            <Image source={{ uri: driverPhoto }} style={styles.avatarSmall} />
+            <Image
+              source={{
+                uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=64&h=64&fit=crop',
+              }}
+              style={styles.avatarSmall}
+            />
           ) : null}
+
           <Text style={styles.pickupTitle}>
             {variant === 'driver'
               ? driverName || 'Conductor'
@@ -319,7 +334,6 @@ export default function CurrentTripDashboard({
         ) : (
           <View>
             <ButtonContext onPress={() => console.log('Ruta cancelada')} />
-            
           </View>
         )}
       </View>
@@ -338,8 +352,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
@@ -379,10 +393,9 @@ const styles = StyleSheet.create({
   },
   rowCenter: {
     flex: 1,
-    backgroundColor: '#f7f7f7',
+    backgroundColor: '#fff',
     marginTop: 5,
     marginBottom: 17,
-    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'flex-start',
@@ -420,6 +433,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: 'bold',
     color: '#111827',
+  },
+  titleAvatar: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    marginLeft: 8,
+    marginRight: 6,
   },
   subInfoText: {
     fontSize: 13,

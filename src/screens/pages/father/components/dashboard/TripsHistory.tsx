@@ -98,7 +98,7 @@ export default function Historias() {
                 <MarkerOrigin
                   width={24}
                   height={24}
-                  color={'#10B981'}
+                  fill={'#10B981'}
                   style={{
                     borderRadius: 6,
                     marginRight: 12,

@@ -107,11 +107,11 @@ export default function MyAccount() {
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: '#E5E5E5', },
   header: { backgroundColor: '#5d01bc', paddingHorizontal: 20, paddingBottom: 12 },
-  headerContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  back: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  headerContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 32 },
+  back: { width: 32, height: 32, borderRadius: 16, alignItems: 'flex-start', justifyContent: 'center' },
   backText: { color: '#fff', fontSize: 40, lineHeight: 28 },
   headerTitle: { color: '#fff', fontSize: 28, fontWeight: '800' },
-  avatarImg: { width: 56, height: 56, borderRadius: 28, marginLeft: '20%' },
+  avatarImg: { width: 56, height: 56, borderRadius: 28, marginLeft: '30%' },
   container: { flex: 1 },
 
   headerBar: { flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 18 },
