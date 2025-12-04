@@ -5,7 +5,7 @@ import {
   SafeAreaView,
 } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import CloseIcon from '../../../../../assets/icons/close.svg';
+import LessIcon from '../../../../../assets/icons/lessthen.svg';
 import TaskIcon from '../../../../../assets/icons/task.svg';
 
 
@@ -21,7 +21,7 @@ export default function Notifications () {
             onPress={() => navigation.goBack()}
             style={styles.back}
           >
-            <CloseIcon width={24} height={24} fill={'#FFFFFF'} />
+            <LessIcon width={24} height={24} fill={'#FFFFFF'} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
             <Text style={styles.headerTitle}>Notificaciones</Text>
@@ -91,10 +91,11 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   headerContent: {
+    alignContent: 'flex-end',
     flexDirection: 'row',
-
-    justifyContent: 'space-between',
-    paddingBottom: 12,
+    gap: 50,
+    justifyContent: 'space-around',
+    paddingBottom: 7,
   },
   headerBar: {
     flexDirection: 'column',

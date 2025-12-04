@@ -1,7 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
-import type { RootStackParamList } from '../types/navigation';
+import type { RootStackParamList } from '../types/Navigation';
 import * as FileSystem from 'expo-file-system/legacy';
 import { setAuthToken } from '../api/base';
 
@@ -63,7 +63,6 @@ export default function AppNavigator() {
         initialRouteName={initial}
         screenOptions={{ headerShown: false }}
       >
-                <Stack.Screen name="vehicleVerification" component={vehicleVerification} />
         <Stack.Screen name="InitialLogins" component={InitialLogins} />  
 
         <Stack.Screen name="LoginFather" component={LoginFather} />

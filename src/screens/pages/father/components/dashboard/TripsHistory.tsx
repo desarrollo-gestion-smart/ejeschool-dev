@@ -18,8 +18,7 @@ type HistoryItem = {
   id: string;
   from: string;
   to: string;
-  amount: string;
-  status: 'Confirmado' | 'Completado' | 'Cancelado';
+      status: 'Confirmado' | 'Completado' | 'Cancelado';
 };
 
 export default function Historias() {
@@ -32,35 +31,30 @@ export default function Historias() {
         id: '1',
         from: '7958 Swift Village',
         to: '105 William St, Chicago, US',
-        amount: '$75.00',
         status: 'Confirmado',
       },
       {
         id: '2',
         from: '026 Mitchell Burg Apt. 574',
         to: '324 Lottie Views Suite 426',
-        amount: '$30.00',
         status: 'Completado',
       },
       {
         id: '3',
         from: '89 Stacy Falls Suite 953',
         to: '080 Joaquin Isle Suite 865',
-        amount: '$35.00',
         status: 'Completado',
       },
       {
         id: '4',
         from: '89 Stacy Falls Suite 953',
         to: '080 Joaquin Isle Suite 865',
-        amount: '$35.00',
         status: 'Cancelado',
       },
       {
         id: '5',
         from: '89 Stacy Falls Suite 953',
         to: '080 Joaquin Isle Suite 865',
-        amount: '$35.00',
         status: 'Completado',
       },
     ],
@@ -136,20 +130,7 @@ export default function Historias() {
                 flexDirection: 'row',
               }}
             >
-               <View
-              style={{
-                flexDirection: 'row',
-                alignContent: 'center',
-              }}
-            >
-              <CashIcon width={28} height={28} 
-              style={{
-                    borderRadius: 6,
-                    marginRight: 12,
-                    marginTop: 4,
-                  }} />
-              <Text style={styles.amount}>{item.amount}</Text>
-                </View>
+               
               <Text
                 style={[
                   styles.statusButton,

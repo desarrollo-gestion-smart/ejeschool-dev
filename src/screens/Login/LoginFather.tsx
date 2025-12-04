@@ -22,7 +22,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Schoolsvg from '../../assets/school.svg';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
-import { login } from '../../api/auth';
+// import { login } from '../../api/auth';
 
 // Solo esto necesitamos del nuevo Gesture Handler
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -44,6 +44,9 @@ export default function LoginFather() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
+        navigation.replace('PageFather');
+
+    /*
     if (!email || !password) {
       Alert.alert('Por favor, complete todos los campos');
       return;
@@ -53,32 +56,26 @@ export default function LoginFather() {
       const res = await login({ email, password, role: 'parent' });
       const role = (res as any)?.user?.role;
       if (role === 'parent' || role === 'admin') {
-        navigation.replace('PageFather');
       } else {
-        Alert.alert(
-          'Acceso denegado',
-          'Tu rol no tiene acceso a esta pantalla',
-        );
+        Alert.alert('Acceso denegado','Tu rol no tiene acceso a esta pantalla');
       }
     } catch (e: any) {
-      Alert.alert(
-        'Login fallido',
-        e?.response?.data?.message || 'Error de autenticación',
-      );
+      Alert.alert('Login fallido', e?.response?.data?.message || 'Error de autenticación');
     } finally {
       setIsLoading(false);
     }
+    */
   };
 
-  // Gesto de deslizar de derecha a izquierda para volver atrás (sin Reanimated)
+  
   const swipeBackGesture = Gesture.Pan()
     .minDistance(40) // Mínimo recorrido
     .minPointers(1)
     .maxPointers(1)
-    .activeOffsetX([-10, 10]) // Solo se activa si el movimiento es principalmente horizontal
-    .failOffsetY([-15, 15]) // Se cancela si hay mucho movimiento vertical
+    .activeOffsetX([-10, 10]) 
+    .failOffsetY([-15, 15]) 
     .onEnd(event => {
-      // Deslizó hacia la derecha (translationX positivo) lo suficiente y rápido → volver atrás
+      
       if (event.translationX > 120 && event.velocityX > 400) {
         navigation.goBack();
       }
@@ -162,8 +159,7 @@ export default function LoginFather() {
                         </TouchableOpacity>
                       </View>
                       <Text style={styles.terms}>
-                      <SinginWithaGoogle />
-
+                         <SinginWithaGoogle /> 
                         Al hacer clic en iniciar, acepta nuestros Términos y
                         condiciones
                       </Text>

@@ -22,6 +22,7 @@ export type Coordinate = {
 import VehicleIcon from '../../assets/icons/car-black.svg';
 import MarkerOrigin from '../../assets/markers/marker-origin-own.svg';
 import MarkerDestination from '../../assets/markers/marker-destination.svg';
+import AvatarBadge from '../AvatarBadge';
 
 type Props = {
   title?: string;
@@ -194,9 +195,25 @@ export default function RoutesMenu({
           const legMin = routeIdx < perLeg.length ? perLeg[routeIdx] : 0;
           remaining = !isLast ? Math.max(0, remaining - legMin) : remaining;
 
+          const displayName = (selected.students?.[routeIdx] || c.name || stopTitle || '').trim();
+          const initials = displayName
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map(w => w[0]?.toUpperCase() || '')
+            .join('') || '·';
+          const avatarColor = isFirst
+            ? '#2563EB'
+            : isLast
+              ? '#2563EB'
+              : (c.status === 'green' ? '#10B981' : '#EF4444');
+
           return (
             <View key={`${selected.id}-${routeIdx}`} style={styles.stopRow}>
               <View style={styles.stopLeft}>
+                <View style={styles.stopAvatarCol}>
+                  <AvatarBadge size={26} backgroundColor={avatarColor} text={initials} textColor="#FFFFFF" />
+                </View>
                 <View style={styles.stopIconCol}>
                   {!isFirst && <View style={styles.connectorTop} />}
                   {isFirst ? (
@@ -301,6 +318,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F0F0F0',
   },
   stopLeft: { flexDirection: 'row', flex: 1, alignItems: 'center' },
+  stopAvatarCol: { width: 28, alignItems: 'center' },
   stopIconCol: { width: 24, alignItems: 'center', },
   connectorTop: {
     position: 'absolute',

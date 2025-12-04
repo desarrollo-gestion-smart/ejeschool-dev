@@ -2,40 +2,51 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import MapFather from '../map/MapFather';
 import ButtonContext from '../map/ButtonContent';
-import routesData from '../../../../../components/FooterRoutes/routesData'; // Ajusta la ruta según tu proyecto
-
-import MarkerOrigin from '../../../../../assets/markers/marker-origin.svg';
-import VehicleSvg from '../../../../../assets/vehicle.svg';
-
-const CarIcon = () => <VehicleSvg width={60} height={90} />;
+import routesData, {
+  routeEvents,
+} from '../../../../../components/FooterRoutes/routesData';
+import VehicleIcon from '../../../../../assets/icons/car-black.svg';
+import MarkerOrigin from '../../../../../assets/markers/marker-origin-own.svg';
+import MarkerDestination from '../../../../../assets/markers/marker-destination.svg';
 
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import Config from 'react-native-config';
-import { fetchDriverProfile, fetchStudentProfile } from '../../../../../api/driver';
+import {
+  fetchDriverProfile,
+  fetchStudentProfile,
+} from '../../../../../api/driver';
+import SvgIcon from '../../../../../components/SvgIcon';
 type RootParams = {
   DashboardFather: { studentName?: string; avatarUri?: string };
 };
 
 type Variant = 'parent' | 'driver';
 
-export default function CurrentTripDashboard({ variant = 'parent' }: { variant?: Variant } = {}) {
+export default function CurrentTripDashboard({
+  variant = 'parent',
+}: { variant?: Variant } = {}) {
   const routeParam = useRoute<RouteProp<RootParams, 'DashboardFather'>>();
   const studentName = routeParam?.params?.studentName;
   const avatarUri = routeParam?.params?.avatarUri;
   const navigation = useNavigation<any>();
   const [driverName, setDriverName] = React.useState('');
-  const [driverPhoto, setDriverPhoto] = React.useState<string | undefined>(undefined);
+  const [driverPhoto, setDriverPhoto] = React.useState<string | undefined>(
+    undefined,
+  );
   const [parentPhone, setParentPhone] = React.useState('');
   const [pickupStreet, setPickupStreet] = React.useState('');
+  const [previousStreet, setPreviousStreet] = React.useState('');
+  const [dropoffStreet, setDropoffStreet] = React.useState('');
   const [aboard, setAboard] = React.useState(false);
 
   // Tomamos la primera ruta como ejemplo (puedes pasarla por props o usar estado global)
-  const route =
+  const initialRoute =
     (studentName
       ? routesData.find(r =>
           (r.stops || []).some(s => s.student === studentName),
         )
       : undefined) || routesData[0];
+  const [route, setRoute] = React.useState(initialRoute);
 
   // Solo usamos el primer y último punto como recogida y destino
   const pickup = (
@@ -50,35 +61,67 @@ export default function CurrentTripDashboard({ variant = 'parent' }: { variant?:
         .includes('colegio nsr'),
     ) as any) || route.stops[route.stops.length - 1];
 
-  const pickupIdx = route.stops.findIndex(s => s.student === (pickup?.student as string));
-  const previous = pickupIdx > 0 ? (route.stops[pickupIdx - 1] as any) : undefined;
+  const pickupIdx = route.stops.findIndex(
+    s => s.student === (pickup?.student as string),
+  );
+  const previous =
+    pickupIdx > 0 ? (route.stops[pickupIdx - 1] as any) : undefined;
   const driverPos = previous
-    ? { latitude: previous.latitude + 0.00012, longitude: previous.longitude + 0.00012 }
-    : { latitude: pickup.latitude + 0.00012, longitude: pickup.longitude + 0.00012 };
+    ? {
+        latitude: previous.latitude + 0.00012,
+        longitude: previous.longitude + 0.00012,
+      }
+    : {
+        latitude: pickup.latitude + 0.00012,
+        longitude: pickup.longitude + 0.00012,
+      };
 
   // Simulamos distancia y tiempo (puedes calcularlo con MapViewDirections si quieres)
   const distance = '0.2 km';
   const duration = '2 min';
   const getMapsApiKey = (): string => {
-    return (Config as any)?.GOOGLE_MAPS_API_KEY || (Config as any)?.Maps_API_KEY || '';
+    return (
+      (Config as any)?.GOOGLE_MAPS_API_KEY ||
+      (Config as any)?.Maps_API_KEY ||
+      ''
+    );
   };
-  const getStreetName = React.useCallback(async (lat: number, lng: number): Promise<string> => {
-    const key = getMapsApiKey();
-    if (!key) return '';
-    try {
-      const resp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${key}`);
-      const data = await resp.json();
-      if (data.status === 'OK' && Array.isArray(data.results) && data.results.length > 0) {
-        const comps = Array.isArray(data.results[0].address_components) ? data.results[0].address_components : [];
-        const routeName = String((comps.find((c: any) => (c.types || []).includes('route'))?.long_name) || '').trim();
-        const number = String((comps.find((c: any) => (c.types || []).includes('street_number'))?.long_name) || '').trim();
-        return `${routeName}${routeName && number ? ' ' : ''}${number}`.trim();
+  const getStreetName = React.useCallback(
+    async (lat: number, lng: number): Promise<string> => {
+      const key = getMapsApiKey();
+      if (!key) return '';
+      try {
+        const resp = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${key}`,
+        );
+        const data = await resp.json();
+        if (
+          data.status === 'OK' &&
+          Array.isArray(data.results) &&
+          data.results.length > 0
+        ) {
+          const comps = Array.isArray(data.results[0].address_components)
+            ? data.results[0].address_components
+            : [];
+          const routeName = String(
+            comps.find((c: any) => (c.types || []).includes('route'))
+              ?.long_name || '',
+          ).trim();
+          const number = String(
+            comps.find((c: any) => (c.types || []).includes('street_number'))
+              ?.long_name || '',
+          ).trim();
+          return `${routeName}${
+            routeName && number ? ' ' : ''
+          }${number}`.trim();
+        }
+        return '';
+      } catch {
+        return '';
       }
-      return '';
-    } catch {
-      return '';
-    }
-  }, []);
+    },
+    [],
+  );
 
   React.useEffect(() => {
     const run = async () => {
@@ -92,32 +135,68 @@ export default function CurrentTripDashboard({ variant = 'parent' }: { variant?:
           const student = await fetchStudentProfile();
           setParentPhone(student.telefono);
         } catch {}
-        try {
-          if (pickup?.latitude && pickup?.longitude) {
-            const street = await getStreetName(pickup.latitude, pickup.longitude);
-            setPickupStreet(street || String(pickup?.Directions || '').trim());
-          }
-        } catch {}
       }
+      try {
+        if (pickup?.latitude && pickup?.longitude) {
+          const street = await getStreetName(pickup.latitude, pickup.longitude);
+          setPickupStreet(street || String(pickup?.Directions || '').trim());
+        }
+      } catch {}
+      try {
+        if (previous?.latitude && previous?.longitude) {
+          const street = await getStreetName(previous.latitude, previous.longitude);
+          setPreviousStreet(street || String(previous?.Directions || previous?.name || '').trim());
+        }
+      } catch {}
+      try {
+        if (dropoff?.latitude && dropoff?.longitude) {
+          const street = await getStreetName(dropoff.latitude, dropoff.longitude);
+          setDropoffStreet(street || String(dropoff?.name || '').trim());
+        }
+      } catch {}
     };
     run();
-  }, [avatarUri, pickup, getStreetName, variant]);
-  
+  }, [avatarUri, pickup, previous, dropoff, getStreetName, variant]);
+
+  React.useEffect(() => {
+    const handler = (payload: any) => {
+      if (!payload) return;
+      if (payload.routeId !== route.id) return;
+      const idx = (route?.stops || []).findIndex(
+        s => s.student === payload.student,
+      );
+      if (idx >= 0) {
+        const nextStops = route.stops.slice();
+        nextStops[idx] = { ...nextStops[idx], status: payload.status } as any;
+        setRoute({ ...route, stops: nextStops } as any);
+      }
+    };
+    routeEvents.on('route:setStatus', handler);
+    return () => routeEvents.off('route:setStatus', handler);
+  }, [route.id, route.stops]);
 
   return (
     <View style={styles.container}>
-      <MapFather pickup={pickup} dropoff={dropoff} previous={previous} driver={driverPos} />
+      <MapFather
+        pickup={pickup}
+        dropoff={dropoff}
+        previous={previous}
+        driver={driverPos}
+      />
 
       <View style={styles.bottomPanel}>
-       
         <View style={styles.rowCenter}>
           {variant === 'driver' ? (
-            driverPhoto ? <Image source={{ uri: driverPhoto }} style={styles.avatarSmall} /> : null
-          ) : (
-            avatarUri ? <Image source={{ uri: avatarUri }} style={styles.avatarSmall} /> : null
-          )}
+            driverPhoto ? (
+              <Image source={{ uri: driverPhoto }} style={styles.avatarSmall} />
+            ) : null
+          ) : avatarUri ? (
+            <Image source={{ uri: driverPhoto }} style={styles.avatarSmall} />
+          ) : null}
           <Text style={styles.pickupTitle}>
-            {variant === 'driver' ? (driverName || 'Conductor') : (pickup?.student || 'Nombre del estudiante')}
+            {variant === 'driver'
+              ? driverName || 'Conductor'
+              : driverName || 'Conductor'}
           </Text>
 
           <TouchableOpacity
@@ -128,11 +207,9 @@ export default function CurrentTripDashboard({ variant = 'parent' }: { variant?:
                 recipientName:
                   variant === 'driver'
                     ? `Padre de ${pickup?.student || 'estudiante'}`
-                    : (driverName || 'Conductor'),
+                    : driverName || 'Conductor',
                 recipientAvatar:
-                  variant === 'driver'
-                    ? undefined
-                    : (driverPhoto || undefined),
+                  variant === 'driver' ? undefined : driverPhoto || undefined,
               })
             }
           >
@@ -157,42 +234,49 @@ export default function CurrentTripDashboard({ variant = 'parent' }: { variant?:
             <MarkerOrigin
               width={20}
               height={20}
-              color="#10B981"
+              fill="#FF2D55"
+              stroke="#fff"
+              strokeWidth={2.5}
               style={styles.inlineIcon}
             />
             <Text style={styles.pickupAddress}>
-              {pickup?.Directions || 'recogida en curso'}
+              {pickupStreet || 'recogida en curso'}
             </Text>
           </View>
         )}
 
         <View style={styles.destinationRow}>
-          <MarkerOrigin
-            width={20}
-            height={20}
-            color="#2563EB"
-            style={styles.inlineIcon}
-          />
+          <MarkerDestination width={20} height={30} fill="#2641dcff" />
           <Text style={styles.destinationText}>
-            {dropoff.name || 'Colegio NSR'}
+            {dropoffStreet || dropoff?.address || 'Colegio NSR'}
           </Text>
         </View>
 
         {variant === 'driver' ? (
           <View style={styles.destinationRow}>
-            <MarkerOrigin
-              width={20}
-              height={20}
-              color="#10B981"
+            <SvgIcon
+              component={MarkerOrigin}
+              width={22}
+              height={22}
+              fill="#EF4444"
+              stroke="#fff"
+              strokeWidth={2.5}
               style={styles.inlineIcon}
             />
-            <Text style={styles.destinationText}>{parentPhone || '+54 11 0000-0000'}</Text>
+            <Text style={styles.destinationText}>
+              {parentPhone || '+54 11 0000-0000'}
+            </Text>
           </View>
         ) : null}
 
         {/* Info de distancia y tiempo */}
         <View style={styles.infoRow}>
-          <CarIcon />
+          <VehicleIcon
+            width={52}
+            height={20}
+            fill="#6D28D9"
+            style={styles.vehicleIcon}
+          />
 
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>DISTANCIA</Text>
@@ -212,10 +296,20 @@ export default function CurrentTripDashboard({ variant = 'parent' }: { variant?:
                 const next = !v;
                 try {
                   const idx = (route?.stops || []).findIndex(
-                    s => s.latitude === pickup?.latitude && s.longitude === pickup?.longitude,
+                    s =>
+                      s.latitude === pickup?.latitude &&
+                      s.longitude === pickup?.longitude,
                   );
                   if (idx >= 0) {
-                    (route.stops[idx] as any).status = next ? 'green' : 'red';
+                    const status = next ? 'green' : 'red';
+                    const nextStops = route.stops.slice();
+                    nextStops[idx] = { ...nextStops[idx], status } as any;
+                    setRoute({ ...route, stops: nextStops } as any);
+                    routeEvents.emit('route:setStatus', {
+                      routeId: route.id,
+                      student: pickup?.student,
+                      status,
+                    });
                   }
                 } catch {}
                 return next;
@@ -223,10 +317,12 @@ export default function CurrentTripDashboard({ variant = 'parent' }: { variant?:
             }}
           />
         ) : (
-          <ButtonContext onPress={() => console.log('Ruta cancelada')} />
+          <View>
+            <ButtonContext onPress={() => console.log('Ruta cancelada')} />
+            
+          </View>
         )}
       </View>
-      
     </View>
   );
 }
@@ -276,6 +372,7 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   destinationText: {
+    marginLeft: 10,
     fontSize: 17,
     fontWeight: '600',
     color: '#1F2937',
@@ -284,7 +381,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f7f7f7',
     marginTop: 5,
-    marginBottom:17,
+    marginBottom: 17,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -295,6 +392,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-around',
+    marginBottom: 10,
   },
   infoItem: {
     alignItems: 'center',
@@ -303,7 +401,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#6B7280',
   },
-  
+
   chatButton: {
     position: 'absolute',
     top: 10,
@@ -317,10 +415,16 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   chatButtonText: { color: '#FFFFFF', fontSize: 18, fontWeight: '600' },
- 
+
   infoValue: {
     fontSize: 13,
     fontWeight: 'bold',
     color: '#111827',
   },
+  subInfoText: {
+    fontSize: 13,
+    color: '#374151',
+    marginTop: 4,
+  },
+  vehicleIcon: { marginRight: 10 },
 });
