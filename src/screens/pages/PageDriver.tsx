@@ -8,9 +8,11 @@ import MapComponent from '../../components/map/MapComponent';
 import TopBar from '../../components/map/layout/TopBar';
 import MenuRoutes from '../../components/map/layout/MenuRoutes';
 import RoutesMenu from '../../components/FooterRoutes/RenderRoutes';
-import { routes } from '../../components/FooterRoutes/routesData';
-import api, { getAuthToken } from '../../api/base';
+import type { RouteData } from '../../components/FooterRoutes/routesData';
+import api, { getAuthToken, getCompanyId } from '../../api/base';
+import Config from 'react-native-config';
 import VehicleListModal from './driver/components/VehicleListModal';
+import routesFallback from '../../components/FooterRoutes/routesData';
 
  
 
@@ -20,23 +22,17 @@ type BottomArgs = { collapsed: boolean; toggle: () => void; onRouteSelect: (stop
 function PageDriver() {
   const insets = useSafeAreaInsets();
   const [isDetails, setIsDetails] = React.useState(false);
-  const fallback = React.useMemo<Region>(() => ({
-    latitude: -34.6037,
-    longitude: -58.3816,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
-  }), []);
-  const [initialRegion, setInitialRegion] = React.useState<Region>(fallback);
+  const [initialRegion, setInitialRegion] = React.useState<Region | undefined>(undefined);
   const [devices, setDevices] = React.useState<Array<{ id?: string | number; device_id?: string | number; name?: string; icon_color?: string; icon_colors?: string; device_data?: { icon_color?: string } }>>([]);
   const [selectedVehicleName, setSelectedVehicleName] = React.useState<string>('');
   const [selectedVehicleColor, setSelectedVehicleColor] = React.useState<string>('');
   const [selectedVehicleId, setSelectedVehicleId] = React.useState<string | number | undefined>(undefined);
   const [selectedDriverCoord, setSelectedDriverCoord] = React.useState<{ latitude: number; longitude: number } | undefined>(undefined);
   const [vehiclesOpen, setVehiclesOpen] = React.useState(false);
-  const [mapKey, setMapKey] = React.useState(0);
   const [page, setPage] = React.useState(1);
   const [loadingDevices, setLoadingDevices] = React.useState(false);
   const [hasMore, setHasMore] = React.useState(true);
+  const [routesApi, setRoutesApi] = React.useState<RouteData[]>([]);
   const pageRef = React.useRef(page);
   const loadingRef = React.useRef(loadingDevices);
   React.useEffect(() => { pageRef.current = page; }, [page]);
@@ -47,6 +43,7 @@ function PageDriver() {
       if (Platform.OS === 'android') {
         const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          setInitialRegion({ latitude: -34.6037, longitude: -58.3816, latitudeDelta: 0.02, longitudeDelta: 0.02 });
           return;
         }
       } else {
@@ -58,12 +55,82 @@ function PageDriver() {
           const { latitude, longitude } = pos.coords;
           setInitialRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 });
         },
-        _err => { console.log('PageDriver initialRegion error', _err); },
+        _err => { console.log('PageDriver initialRegion error', _err); setInitialRegion({ latitude: -34.6037, longitude: -58.3816, latitudeDelta: 0.02, longitudeDelta: 0.02 }); },
         { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
       );
     };
     init();
-  }, [fallback]);
+  }, []);
+
+  React.useEffect(() => {
+    const loadRoutes = async () => {
+      try {
+        const base = (api.defaults as any)?.baseURL || (Config as any)?.APP_DEV ;
+        let data: any[] = [];
+        if (base) {
+          const res = await api.get('/travels/v1/routes');
+          const payload = res.data;
+          console.log('PageDriver routes GET base', base);
+          console.log('PageDriver routes raw payload type', typeof payload);
+          data = Array.isArray(payload) ? payload : (payload?.data || payload?.routes || []);
+        }
+        const cid = getCompanyId();
+        console.log('PageDriver routes companyId used', cid);
+        const filtered = cid != null ? data.filter((r: any) => Number(r?.company_id) === Number(cid)) : data;
+        console.log('PageDriver routes filtered count', filtered?.length || 0);
+        
+        const deg2rad = (deg: number) => deg * (Math.PI / 180);
+        const haversineKm = (a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }): number => {
+          const R = 6371;
+          const dLat = deg2rad(b.latitude - a.latitude);
+          const dLon = deg2rad(b.longitude - a.longitude);
+          const s1 = Math.sin(dLat / 2);
+          const s2 = Math.sin(dLon / 2);
+          const c = 2 * Math.asin(Math.sqrt(s1 * s1 + Math.cos(deg2rad(a.latitude)) * Math.cos(deg2rad(b.latitude)) * s2 * s2));
+          return R * c;
+        };
+
+        const mapped: RouteData[] = filtered.map((r: any) => {
+          const secs = Number(r?.estimated_travel_time_seconds ?? r?.estimated_driving_time_seconds ?? 0);
+          const mins = Math.max(1, Math.round(secs / 60));
+          const stops = Array.isArray(r?.stops) ? r.stops.map((s: any) => ({ latitude: Number(s?.latitude), longitude: Number(s?.longitude), address: String(s?.address || '') })) : [];
+          let distanceKm = 0;
+          for (let i = 1; i < stops.length; i++) {
+            const a = stops[i - 1];
+            const b = stops[i];
+            if (typeof a?.latitude === 'number' && typeof a?.longitude === 'number' && typeof b?.latitude === 'number' && typeof b?.longitude === 'number') {
+              distanceKm += haversineKm(a, b);
+            }
+          }
+          const item: RouteData = {
+            id: Number(r?.id),
+            name: String(r?.name ?? r?.Name ?? ''),
+            vehicle: String(r?.vehicle?.plate ?? r?.vehicle_plate ?? r?.plate ?? r?.vehicle_name ?? ''),
+            time: `${mins} min`,
+            type: (() => {
+              const raw = String(r?.type ?? r?.route_type ?? r?.Direction ?? r?.direction ?? '').toLowerCase();
+              return raw.includes('sal') ? 'Salida' : 'Entrada';
+            })(),
+            stops,
+            distanceKm: distanceKm > 0 ? distanceKm : undefined,
+          } as RouteData;
+          console.log('PageDriver route item', { id: item.id, name: item.name, time: item.time, stops: item.stops?.length || 0 });
+          return item;
+        });
+        const finalList = mapped.length > 0 ? mapped : (routesFallback as RouteData[]);
+        setRoutesApi(finalList);
+        console.log('PageDriver routes final mapped count', finalList.length);
+      } catch (e) {
+        console.log('PageDriver loadRoutes error', e);
+        try {
+          const fallback = routesFallback as RouteData[];
+          setRoutesApi(fallback);
+          console.log('PageDriver routes fallback applied', fallback.length);
+        } catch {}
+      }
+    };
+    loadRoutes();
+  }, []);
 
   const loadDevices = React.useCallback(async (p?: number) => {
     try {
@@ -111,9 +178,6 @@ function PageDriver() {
     loadDevices(1);
   }, [loadDevices]);
 
-  React.useEffect(() => {
-    setMapKey(k => k + 1);
-  }, [isDetails]);
 
   React.useEffect(() => {
     if (vehiclesOpen && devices.length === 0 && !loadingDevices) {
@@ -121,10 +185,10 @@ function PageDriver() {
     }
   }, [vehiclesOpen, devices.length, loadingDevices, loadDevices]);
 
-  const bottomContent = React.useCallback(({ collapsed, toggle, onRouteSelect, onModeChange }: BottomArgs) => (
-    <MenuRoutes>
+  const BottomContent: React.FC<BottomArgs> = ({ collapsed, toggle, onRouteSelect, onModeChange }: BottomArgs) => (
+    <MenuRoutes collapsed={collapsed}>
       <RoutesMenu
-        routes={routes}
+        routes={routesApi}
         collapsed={collapsed}
         onToggle={toggle}
         onRouteSelect={onRouteSelect}
@@ -134,9 +198,9 @@ function PageDriver() {
         }}
       />
     </MenuRoutes>
-  ), [setIsDetails]);
+  );
 
-  const TopBarWithCard = React.useMemo(() => (
+  const TopBarWithCard: React.FC = () => (
     !isDetails ? (
       <>
         <TopBar title="Eje School" />
@@ -152,15 +216,14 @@ function PageDriver() {
         </View>
       </>
     ) : null
-  ), [isDetails, insets.top, selectedVehicleName]);
+  );
 
   return (
     <View style={StyleSheet.absoluteFill}>
       <MapComponent
-        key={mapKey}
         initialRegion={initialRegion}
-        renderTopBar={TopBarWithCard}
-        bottomContent={bottomContent}
+        renderTopBar={<TopBarWithCard />}
+        bottomContent={BottomContent}
         driver={selectedDriverCoord}
         driverIconColor={selectedVehicleColor}
         driverDeviceId={selectedVehicleId}
@@ -174,7 +237,6 @@ function PageDriver() {
           setSelectedVehicleColor(String((item as any)?.icon_colors || (item as any)?.icon_color || (item as any)?.device_data?.icon_color || '#000'));
           setSelectedVehicleId((item as any)?.device_id ?? item?.id);
           setSelectedDriverCoord(undefined);
-          setMapKey(k => k + 1);
           setVehiclesOpen(false);
         }}
         loading={loadingDevices}

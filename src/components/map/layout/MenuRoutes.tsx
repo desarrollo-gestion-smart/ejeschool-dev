@@ -10,7 +10,9 @@ type Props = {
 
 export default function MenuRoutes(props: Props) {
   const insets = useSafeAreaInsets();
-  const FIXED_HEIGHT = Math.round(Dimensions.get('window').height * 0.42) + insets.bottom;
+  const screenH = Dimensions.get('window').height;
+  const ratio = props.collapsed ? 0.42 : 0.72;
+  const FIXED_HEIGHT = Math.round(screenH * ratio) + insets.bottom;
 
   return (
     <View style={[styles.container, { height: FIXED_HEIGHT }] }>

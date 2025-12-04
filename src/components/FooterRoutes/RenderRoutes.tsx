@@ -39,11 +39,37 @@ export default function RoutesMenu({
   onModeChange,
 }: Props) {
   const [selected, setSelected] = React.useState<RouteData | null>(null);
+  const [selectedDetailStops, setSelectedDetailStops] = React.useState<Coordinate[]>([]);
 
   React.useEffect(() => {
-    if (!selected && _collapsed) onToggle?.();
     onModeChange?.(!!selected);
   }, [_collapsed, selected, onToggle, onModeChange]);
+
+  React.useEffect(() => {
+    const fetchDetail = async () => {
+      if (!selected) return;
+      try {
+        const res = await api.get(`/travels/v1/routes/${selected.id}`);
+        const payload = res.data;
+        const stops = Array.isArray(payload)
+          ? payload
+          : (payload?.stops || payload?.data?.stops || payload?.route?.stops || []);
+        const mapped: Coordinate[] = stops.map((s: any) => ({
+          latitude: Number(s?.latitude),
+          longitude: Number(s?.longitude),
+          address: String(s?.address || ''),
+          name: String(s?.stop_name || ''),
+        }));
+        setSelectedDetailStops(mapped);
+        const base = mapped.length >= 2 ? mapped : [];
+        if (base.length >= 2) onRouteSelect?.(base);
+        console.log('RoutesMenu route detail', { id: selected.id, stops: mapped.length });
+      } catch (e) {
+        console.log('RoutesMenu route detail error', e);
+      }
+    };
+    fetchDetail();
+  }, [selected, onRouteSelect]);
 
   const parseMinutes = (time: string): number => {
     const m = String(time).match(/(\d+(?:\.\d+)?)\s*min/i);
@@ -89,76 +115,82 @@ export default function RoutesMenu({
 
   const renderList = () => (
     <ScrollView
+      style={styles.listScroll}
       contentContainerStyle={styles.list}
       showsVerticalScrollIndicator={true}
     >
-      <View>
-        {routes.map(r => (
-          <TouchableOpacity
-            key={r.id}
-            style={styles.item}
-            onPress={() => {
-              setSelected(r);
-              onModeChange?.(true);
-              const base = (r.stops || []).filter(s => !s.status);
-              const reds = (r.stops || [])
-                .filter(s => s.status === 'red')
-                .slice(0, 2);
-              const greens = (r.stops || [])
-                .filter(s => s.status === 'green')
-                .slice(0, 2);
-              const ordered =
-                base.length >= 2
-                  ? [base[0], ...reds, ...greens, base[base.length - 1]]
-                  : base;
-              onRouteSelect?.(ordered);
-              if (_collapsed) onToggle?.();
-            }}
-          >
-            <View style={styles.itemLeft}>
-              <View style={styles.nameRow}>
-                <VehicleIcon
-                  width={0}
-                  height={18}
-                  fill="#6D28D9"
-                  style={styles.vehicleIcon}
-                />
-                <Text style={styles.itemName}>{r.name}</Text>
+      {routes && routes.length > 0 ? (
+        <View>
+          {routes.map(r => (
+            <TouchableOpacity
+              key={r.id}
+              style={styles.item}
+              onPress={() => {
+                setSelected(r);
+                onModeChange?.(true);
+                const base = (r.stops || []).filter(s => !s.status);
+                const reds = (r.stops || [])
+                  .filter(s => s.status === 'red')
+                  .slice(0, 2);
+                const greens = (r.stops || [])
+                  .filter(s => s.status === 'green')
+                  .slice(0, 2);
+                const ordered =
+                  base.length >= 2
+                    ? [base[0], ...reds, ...greens, base[base.length - 1]]
+                    : base;
+                onRouteSelect?.(ordered);
+                if (_collapsed) onToggle?.();
+              }}
+            >
+              <View style={styles.itemLeft}>
+                <View style={styles.nameRow}>
+                  <VehicleIcon
+                    width={0}
+                    height={18}
+                    fill="#6D28D9"
+                    style={styles.vehicleIcon}
+                  />
+                  <Text style={styles.itemName}>{r.name}</Text>
+                </View>
+                {(() => {
+                  const d = (r as any).distanceKm;
+                  const sub = r.vehicle || (typeof d === 'number' ? `${d.toFixed(2)} km` : '');
+                  return sub ? <Text style={styles.itemSub}>{sub}</Text> : null;
+                })()}
               </View>
-              {r.vehicle && <Text style={styles.itemSub}>{r.vehicle}</Text>}
-            </View>
             <View style={styles.itemRight}>
               <Text style={styles.itemTime}>{r.time}</Text>
               <Text style={styles.itemType}>{r.type}</Text>
             </View>
-          </TouchableOpacity>
-        ))}
-      </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      ) : (
+        <View style={styles.emptyBox}>
+          <Text style={styles.emptyText}>Sin rutas disponibles</Text>
+        </View>
+      )}
     </ScrollView>
   );
 
   const renderDetails = () => {
   if (!selected) return null;
   const totalMin = parseMinutes(selected.time);
-  const base = selected.stops.filter(s => !s.status);
-  const reds = selected.stops.filter(s => s.status === 'red').slice(0, 2);
-  const greens = selected.stops.filter(s => s.status === 'green').slice(0, 2);
-  const routeStops = base.length >= 2 ? [base[0], ...reds, ...greens, base[base.length - 1]] : base;
+  const detailBase = selectedDetailStops;
+  const base = detailBase.length > 0 ? detailBase : selected.stops.filter(s => !s.status);
+  const routeStops = base.length >= 2 ? base : base;
   const perLeg = computePerLegMinutes(routeStops, totalMin);
 
   let remaining = totalMin;
 
   return (
-    <ScrollView showsVerticalScrollIndicator={true} contentContainerStyle={styles.container}>
+    <ScrollView style={styles.detailsScroll} showsVerticalScrollIndicator={true} contentContainerStyle={styles.container}>
       <>
         {routeStops.map((c, routeIdx) => {
           const isFirst = routeIdx === 0;
           const isLast = routeIdx === routeStops.length - 1;
-          const stopTitle = isFirst
-            ? (selected.students?.[routeIdx] || `Punto ${routeIdx + 1}`)
-            : isLast
-              ? (c.name || 'Destino')
-              : (c.name || `Punto ${routeIdx + 1}`);
+          const stopTitle = c.name || (selected.students?.[routeIdx] || `Punto ${routeIdx + 1}`);
           const legMin = routeIdx < perLeg.length ? perLeg[routeIdx] : 0;
           remaining = !isLast ? Math.max(0, remaining - legMin) : remaining;
 
@@ -189,8 +221,7 @@ export default function RoutesMenu({
 
                 </View>
               </View>
-                <View>
-                  </View>    
+                <View />    
 
 
 
@@ -221,8 +252,16 @@ export default function RoutesMenu({
     <View style={styles.container}>
       <View style={styles.contentFrame}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>{headerTitle}</Text>
+        <Text style={styles.title}>{headerTitle}{!selected && routes ? ` (${routes.length})` : ''}</Text>
       </View>
+      {!selected && routes && routes.length > 0 ? (
+        <View style={styles.summaryBox}>
+          {routes.map(r => (
+            <Text key={`summary-${r.id}`} style={styles.summaryText}>{String((r as any).name ?? (r as any).Name ?? '')}</Text>
+          ))}
+        </View>
+      ) : null}
+      
       {selected ? renderDetails() : renderList()}
       </View>
     </View>
@@ -231,10 +270,9 @@ export default function RoutesMenu({
 
 const styles = StyleSheet.create({
   container: {
-
     width: '100%',
     minHeight: 120,
-    backgroundColor: 'transparent',
+    backgroundColor: '#FFFFFF',
   },
   headerRow: {
     alignItems: 'center',
@@ -246,12 +284,15 @@ const styles = StyleSheet.create({
     color: '#1F1F1F',
   },
   list: {},
+  listScroll: { flex: 1 },
+  detailsScroll: { flex: 1 },
   detailsContent: {flex: 1,},
   item: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 15,
     borderBottomColor: '#F0F0F0',
+    borderBottomWidth: 1,
   },
   vehicleIcon: { marginRight: 10 },
   itemLeft: { flex: 1 },
@@ -302,4 +343,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
   },
+  emptyBox: { paddingVertical: 20, alignItems: 'center' },
+  emptyText: { fontSize: 14, color: '#666' },
+  
+  summaryBox: { paddingVertical: 6, paddingHorizontal: 12 },
+  summaryText: { fontSize: 12, color: '#374151' },
 });
+import api from '../../api/base';

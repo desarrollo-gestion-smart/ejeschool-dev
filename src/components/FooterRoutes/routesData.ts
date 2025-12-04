@@ -20,16 +20,17 @@ export type StudentInfo = {
 };
 
 export type RouteData = {
-  id: number;
-  name: string;
-  vehicle?: string;
-  time: string;
-  type: 'Entrada' | 'Salida';
-  description?: string;
+  id: number;
+  name: string;
+  vehicle?: string;
+  time: string;
+  hour?: string;
+  type: 'Entrada' | 'Salida';
+  description?: string;
   students?: string[];
   stops: (Coordinate & { student?: string } & { Directions?: string })[];
   info?: StudentInfo[];
-  
+  distanceKm?: number;
 };
 
 

@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import Config from 'react-native-config';
 
 
-const BASE_URL = (Config as any)?.APP_URL || (Config as any)?.APP_url || '';
+const BASE_URL = (Config as any)?.APP_DEV || (Config as any)?.APP_URL || (Config as any)?.APP_url || 'https://dev.ejesatelital.com/api';
 
 const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -20,6 +20,7 @@ const mockUsers: MockUser[] = [
 ];
 
 let currentToken: string | null = null;
+let currentCompanyId: number | null = null;
 
 if (BASE_URL === '') {
   api.defaults.adapter = async (config) => {
@@ -91,6 +92,17 @@ api.interceptors.request.use(
     if (currentToken) {
       config.headers.Authorization = `Bearer ${currentToken}`;
     }
+    try {
+      const method = String(config.method || 'get').toUpperCase();
+      const fullUrl = `${config.baseURL || ''}${config.url || ''}`;
+      const headers = { ...(config.headers || {}) } as any;
+      if (headers && headers.Authorization) {
+        const tok = String(headers.Authorization).replace(/^Bearer\s+/, '');
+        const masked = tok ? `${tok.slice(0, 6)}...${tok.slice(-4)}` : '';
+        headers.Authorization = `Bearer ${masked}`;
+      }
+      console.log('API REQUEST', { method, url: fullUrl, headers, params: config.params });
+    } catch {}
     return config;
   },
   (error) => Promise.reject(error)
@@ -101,5 +113,11 @@ export const setAuthToken = (token: string | null) => {
 };
 
 export const getAuthToken = (): string | null => currentToken;
+
+export const setCompanyId = (companyId: number | null) => {
+  currentCompanyId = companyId ?? null;
+};
+
+export const getCompanyId = (): number | null => currentCompanyId;
 
 export default api;
