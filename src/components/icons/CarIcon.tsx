@@ -1,0 +1,88 @@
+import React from 'react';
+import Svg, {
+  Path,
+  G,
+  Defs,
+  Filter,
+  FeFlood,
+  FeColorMatrix,
+  FeOffset,
+  FeGaussianBlur,
+  FeBlend,
+} from 'react-native-svg';
+
+interface Props {
+  width?: number | string;
+  height?: number | string;
+  fill?: string;
+  shadowOpacity?: number;
+  shadowSize?: number;
+}
+
+const CarIcon = ({
+  width = 54,
+  height = 36,
+  fill = 'black',
+  shadowOpacity = 0.1,
+  shadowSize = 2.01137,
+}: Props) => {
+  return (
+    <Svg width={width} height={height} viewBox="0 0 118 118" fill="none">
+      <Path
+        d="M43.839 15.095C19.6274 23.4317 6.75825 49.8173 15.095 74.0289C23.4317 98.2405 49.8173 111.11 74.0289 102.773C98.2405 94.4362 111.11 68.0506 102.773 43.839C94.4362 19.6274 68.0506 6.75825 43.839 15.095Z"
+        fill={fill}
+        fillOpacity={0.1}
+      />
+      <Defs>
+        <Filter
+          id="filter0_d_1_332"
+          x="37.902"
+          y="41.3017"
+          width="43.254"
+          height="43.254"
+          filterUnits="userSpaceOnUse"
+        >
+          <FeFlood floodOpacity="0" result="BackgroundImageFix" />
+          <FeColorMatrix
+            in="SourceAlpha"
+            type="matrix"
+            values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+            result="hardAlpha"
+          />
+          <FeOffset dy={shadowSize} />
+          <FeGaussianBlur stdDeviation={shadowSize} />
+          <FeColorMatrix
+            type="matrix"
+            values={`0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ${shadowOpacity} 0`}
+          />
+          <FeBlend
+            mode="normal"
+            in2="BackgroundImageFix"
+            result="effect1_dropShadow_1_332"
+          />
+          <FeBlend
+            mode="normal"
+            in="SourceGraphic"
+            in2="effect1_dropShadow_1_332"
+            result="shape"
+          />
+        </Filter>
+      </Defs>
+      <G filter="url(#filter0_d_1_332)">
+        <Path
+          d="M54.1693 45.213C45.4961 48.1731 40.8646 57.6039 43.8248 66.2771C46.7849 74.9504 56.2156 79.5818 64.8889 76.6217C73.5621 73.6616 78.1936 64.2308 75.2334 55.5576C72.2733 46.8843 62.8426 42.2529 54.1693 45.213Z"
+          fill={fill}
+          stroke="white"
+          strokeWidth="2.01137"
+          strokeMiterlimit="10"
+        />
+      </G>
+      <Path
+        d="M54.0998 65.5354L56.5564 52.0383C56.5713 51.9072 56.625 51.7836 56.7108 51.6834C56.7966 51.5831 56.9104 51.5109 57.0376 51.476C57.0917 51.4596 57.1472 51.448 57.2033 51.4412C57.3623 51.4187 57.5241 51.4533 57.6599 51.5388C57.7918 51.6191 57.8911 51.7433 57.9404 51.8896L59.8611 57.9315L66.745 57.4363C66.894 57.3824 67.0566 57.3788 67.2078 57.4261C67.3583 57.4712 67.4871 57.5698 67.5698 57.7033C67.6549 57.8341 67.6917 57.9905 67.6739 58.1455C67.656 58.3005 67.5846 58.4445 67.4719 58.5524L55.3106 66.0968C55.2321 66.1774 55.1354 66.2379 55.0286 66.2732C54.9419 66.3058 54.8495 66.3202 54.757 66.3157C54.6645 66.3111 54.5739 66.2877 54.4908 66.2469C54.3532 66.1921 54.2389 66.0912 54.1675 65.9614C54.0962 65.8315 54.0723 65.681 54.0998 65.5354Z"
+        fill="white"
+      />
+    </Svg>
+  );
+};
+
+export default CarIcon;

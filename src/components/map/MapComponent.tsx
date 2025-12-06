@@ -1,5 +1,14 @@
-import React from 'react';
-import { StyleSheet, View, TouchableOpacity, Image, Alert, Platform, PermissionsAndroid } from 'react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Image,
+  Alert,
+  Platform,
+  PermissionsAndroid,
+  Animated,
+} from 'react-native';
 import MapView, { Marker, Region, PROVIDER_GOOGLE } from 'react-native-maps';
 import MapViewDirections from 'react-native-maps-directions';
 import Config from 'react-native-config';
@@ -10,8 +19,7 @@ import Geolocation from '@react-native-community/geolocation';
 import MarkerOrigin from '../../assets/markers/marker-origin.svg';
 import MarkerDestination from '../../assets/markers/makerr-destination-own.svg';
 import type { Coordinate } from '../FooterRoutes/routesData';
-import MarkerMe from '../../assets/markers/waypoint.svg';
-const CarSport = require('../../assets/icons/carro-deportivo.png');
+import CarIcon from '../../assets/markers/waypoint-own.svg';
 
 type MarkerItem = {
   id: number;
@@ -41,19 +49,26 @@ type Props = {
 };
 
 const getMapsApiKey = (): string => {
-  return (Config as any)?.GOOGLE_MAPS_API_KEY || (Config as any)?.Maps_API_KEY || '';
+  return (
+    (Config as any)?.GOOGLE_MAPS_API_KEY || (Config as any)?.Maps_API_KEY || ''
+  );
 };
 
 // Esta función simulará la obtención de la dirección real a partir de las coordenadas
-const getAddressFromCoordinates = async (latitude: number, longitude: number): Promise<string> => {
+const getAddressFromCoordinates = async (
+  latitude: number,
+  longitude: number,
+): Promise<string> => {
   const apiKey = getMapsApiKey();
   if (!apiKey) {
-    console.warn("GOOGLE_MAPS_API_KEY is missing. Cannot perform geocoding.");
+    console.warn('GOOGLE_MAPS_API_KEY is missing. Cannot perform geocoding.');
     return `Lat: ${latitude.toFixed(5)}, Lon: ${longitude.toFixed(5)}`;
   }
 
   try {
-    const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`);
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`,
+    );
     const data = await response.json();
 
     if (data.status === 'OK' && data.results.length > 0) {
@@ -62,7 +77,7 @@ const getAddressFromCoordinates = async (latitude: number, longitude: number): P
       return 'Dirección no encontrada';
     }
   } catch (error) {
-    console.error("Geocoding failed:", error);
+    console.error('Geocoding failed:', error);
     return 'Error de servicio de geocodificación';
   }
 };
@@ -81,46 +96,127 @@ export default function MapComponent({
   driverIconColor,
   driverDeviceId,
 }: Props) {
-
   const uberLightMapStyle = [
     { elementType: 'geometry', stylers: [{ color: '#FAFAFA' }] },
-    { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#F7F8FA' }] },
-    { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#FAFAFA' }] },
-    { featureType: 'landscape.man_made', elementType: 'geometry', stylers: [{ color: '#F9FAFB' }] },
-    { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#FAFAFA' }] },
+    {
+      featureType: 'water',
+      elementType: 'geometry',
+      stylers: [{ color: '#F7F8FA' }],
+    },
+    {
+      featureType: 'landscape',
+      elementType: 'geometry',
+      stylers: [{ color: '#FAFAFA' }],
+    },
+    {
+      featureType: 'landscape.man_made',
+      elementType: 'geometry',
+      stylers: [{ color: '#F9FAFB' }],
+    },
+    {
+      featureType: 'landscape.natural',
+      elementType: 'geometry',
+      stylers: [{ color: '#FAFAFA' }],
+    },
     { featureType: 'poi', stylers: [{ visibility: 'off' }] },
     { featureType: 'poi.park', stylers: [{ visibility: 'off' }] },
     { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-    { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#FFFFFF' }] },
-    { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#F7F7F7' }] },
-    { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#FFFFFF' }] },
-    { featureType: 'road.local', elementType: 'geometry', stylers: [{ color: '#FFFFFF' }] },
-    { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#EEEEEE' }] },
-    { featureType: 'road', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
-    { featureType: 'road', elementType: 'labels.text.stroke', stylers: [{ visibility: 'off' }] },
-    { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#BDBDBD' }] },
-    { featureType: 'administrative', elementType: 'labels.text.fill', stylers: [{ color: '#B8B8B8' }] },
-    { featureType: 'administrative', elementType: 'geometry', stylers: [{ visibility: 'off' }] },
+    {
+      featureType: 'road',
+      elementType: 'geometry',
+      stylers: [{ color: '#FFFFFF' }],
+    },
+    {
+      featureType: 'road.highway',
+      elementType: 'geometry',
+      stylers: [{ color: '#F7F7F7' }],
+    },
+    {
+      featureType: 'road.arterial',
+      elementType: 'geometry',
+      stylers: [{ color: '#FFFFFF' }],
+    },
+    {
+      featureType: 'road.local',
+      elementType: 'geometry',
+      stylers: [{ color: '#FFFFFF' }],
+    },
+    {
+      featureType: 'road',
+      elementType: 'geometry.stroke',
+      stylers: [{ color: '#EEEEEE' }],
+    },
+    {
+      featureType: 'road',
+      elementType: 'labels.icon',
+      stylers: [{ visibility: 'off' }],
+    },
+    {
+      featureType: 'road',
+      elementType: 'labels.text.stroke',
+      stylers: [{ visibility: 'off' }],
+    },
+    {
+      featureType: 'road',
+      elementType: 'labels.text.fill',
+      stylers: [{ color: '#BDBDBD' }],
+    },
+    {
+      featureType: 'administrative',
+      elementType: 'labels.text.fill',
+      stylers: [{ color: '#B8B8B8' }],
+    },
+    {
+      featureType: 'administrative',
+      elementType: 'geometry',
+      stylers: [{ visibility: 'off' }],
+    },
   ];
+//-----------------------------------------
+const [bearing, setBearing] = useState<number>(0); // Ángulo actual del vehículo
+const rotation = useRef(new Animated.Value(0)).current;
 
+// Animación suave de rotación
+useEffect(() => {
+  Animated.timing(rotation, {
+    toValue: bearing,
+    duration: 300,
+    useNativeDriver: true,
+  }).start();
+}, [bearing]);
+
+
+//------------------------------------
   const mapRef = React.useRef<MapView>(null);
-  const [activeRoute, setActiveRoute] = React.useState<{ origin?: Coordinate; destination?: Coordinate; driver?: Coordinate; waypoints?: Coordinate[]; }>({});
-  const [routeStopMarkers, setRouteStopMarkers] = React.useState<MarkerItem[]>([]);
+  const [activeRoute, setActiveRoute] = React.useState<{
+    origin?: Coordinate;
+    destination?: Coordinate;
+    driver?: Coordinate;
+    waypoints?: Coordinate[];
+  }>({});
+  const [routeStopMarkers, setRouteStopMarkers] = React.useState<MarkerItem[]>(
+    [],
+  );
   const [_routeCoords, _setRouteCoords] = React.useState<Coordinate[]>([]);
   const [collapsed, setCollapsed] = React.useState(true);
   const [isFollowing, setIsFollowing] = React.useState(false);
-  
+
   const googleApiKey = getMapsApiKey();
-  const [userLocation, setUserLocation] = React.useState<Coordinate | null>(null);
+  const [userLocation, setUserLocation] = React.useState<Coordinate | null>(
+    null,
+  );
   const userLocationRef = React.useRef<Coordinate | null>(null);
   const [_driverLive, _setDriverLive] = React.useState<Coordinate | null>(null);
-  const [directionsErrorNotified, setDirectionsErrorNotified] = React.useState(false);
-  const BottomContentComp = bottomContent as React.ComponentType<{
-    collapsed: boolean;
-    toggle: () => void;
-    onRouteSelect: (stops: Coordinate[]) => void;
-    onModeChange: (isDetails: boolean) => void;
-  }> | undefined;
+  const [directionsErrorNotified, setDirectionsErrorNotified] =
+    React.useState(false);
+  const BottomContentComp = bottomContent as
+    | React.ComponentType<{
+        collapsed: boolean;
+        toggle: () => void;
+        onRouteSelect: (stops: Coordinate[]) => void;
+        onModeChange: (isDetails: boolean) => void;
+      }>
+    | undefined;
 
   const DEFAULT_REGION: Region = {
     latitude: 0,
@@ -131,11 +227,12 @@ export default function MapComponent({
 
   React.useEffect(() => {
     if (userLocation) {
-      console.log('UserLocation', { latitude: userLocation.latitude, longitude: userLocation.longitude });
+      console.log('UserLocation', {
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+      });
     }
   }, [userLocation]);
-
-  
 
   const directionsData = React.useMemo(() => {
     const googleKey = googleApiKey || (Config as any).GOOGLE_MAPS_API_KEY;
@@ -145,16 +242,14 @@ export default function MapComponent({
     return { googleKey, o, d, w };
   }, [googleApiKey, activeRoute, origin, destination, waypoints]);
 
-  
-
-  
-
-  
-
   React.useEffect(() => {
     if (initialRegion) {
-      const { latitude, longitude, latitudeDelta, longitudeDelta } = initialRegion;
-      mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta, longitudeDelta }, 600);
+      const { latitude, longitude, latitudeDelta, longitudeDelta } =
+        initialRegion;
+      mapRef.current?.animateToRegion(
+        { latitude, longitude, latitudeDelta, longitudeDelta },
+        600,
+      );
     }
   }, [initialRegion]);
 
@@ -168,7 +263,10 @@ export default function MapComponent({
         ]);
         console.log('MapComponent android permissions', res);
       } else {
-        Geolocation.setRNConfiguration({ skipPermissionRequests: false, authorizationLevel: 'whenInUse' } as any);
+        Geolocation.setRNConfiguration({
+          skipPermissionRequests: false,
+          authorizationLevel: 'whenInUse',
+        } as any);
         Geolocation.requestAuthorization();
       }
     };
@@ -182,10 +280,9 @@ export default function MapComponent({
   }, [activeRoute, origin, destination]);
 
   React.useEffect(() => {
-
     let watchId: any = null;
     let intervalId: any = null;
-        // @ts-ignore
+    // @ts-ignore
     const updateFromPosition = (pos: Geolocation.GeoPosition) => {
       const { latitude, longitude } = pos.coords as any;
       const coord = { latitude, longitude };
@@ -199,7 +296,7 @@ export default function MapComponent({
       watchId = Geolocation.watchPosition(
         p => updateFromPosition(p as any),
         e => console.log('MapComponent high-frequency watch error', e),
-        { enableHighAccuracy: true, distanceFilter: 0, interval: 3000 }
+        { enableHighAccuracy: true, distanceFilter: 0, interval: 3000 },
       );
     };
 
@@ -213,13 +310,17 @@ export default function MapComponent({
       if (watchId !== null) Geolocation.clearWatch(watchId);
       if (intervalId !== null) clearInterval(intervalId as any);
     };
-
   }, [isRouteActive]);
 
   React.useEffect(() => {}, [driverDeviceId]);
 
   React.useEffect(() => {
-    if (directionsData.o && directionsData.d && !directionsData.googleKey && !directionsErrorNotified) {
+    if (
+      directionsData.o &&
+      directionsData.d &&
+      !directionsData.googleKey &&
+      !directionsErrorNotified
+    ) {
       setDirectionsErrorNotified(true);
       Alert.alert('Ruta', 'falla en la implementacion para trazar direcciones');
     }
@@ -229,61 +330,85 @@ export default function MapComponent({
     if (isFollowing) {
       const c = userLocation;
       if (c) {
-        mapRef.current?.animateToRegion({
-          latitude: c.latitude,
-          longitude: c.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }, 400);
+        mapRef.current?.animateToRegion(
+          {
+            latitude: c.latitude,
+            longitude: c.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          },
+          400,
+        );
       }
     }
   }, [isFollowing, userLocation]);
 
   // APLICACIÓN DE STOPS CON GEOCODING
-  const applyRouteStops = React.useCallback(
-    async (stops: Coordinate[]) => {
-      console.log('MapComponent applyRouteStops called with stops:', stops?.length || 0);
-      const allStops = (stops || []).filter(Boolean);
-      const routeStopsUniq = allStops.filter((s, idx, arr) => arr.findIndex(t => t.latitude === s.latitude && t.longitude === s.longitude) === idx);
+  const applyRouteStops = React.useCallback(async (stops: Coordinate[]) => {
+    console.log(
+      'MapComponent applyRouteStops called with stops:',
+      stops?.length || 0,
+    );
+    const allStops = (stops || []).filter(Boolean);
+    const routeStopsUniq = allStops.filter(
+      (s, idx, arr) =>
+        arr.findIndex(
+          t => t.latitude === s.latitude && t.longitude === s.longitude,
+        ) === idx,
+    );
 
-      if (routeStopsUniq.length < 2) {
-        setActiveRoute({});
-        setRouteStopMarkers([]);
-        _setRouteCoords([]);
-        return;
-      }
+    if (routeStopsUniq.length < 2) {
+      setActiveRoute({});
+      setRouteStopMarkers([]);
+      _setRouteCoords([]);
+      return;
+    }
 
-      const geocodingPromises = routeStopsUniq.map(async (c) => {
-        const address = await getAddressFromCoordinates(c.latitude, c.longitude);
-        return { ...c, address };
-      });
+    const geocodingPromises = routeStopsUniq.map(async c => {
+      const address = await getAddressFromCoordinates(c.latitude, c.longitude);
+      return { ...c, address };
+    });
 
-      const enrichedStops = await Promise.all(geocodingPromises);
+    const enrichedStops = await Promise.all(geocodingPromises);
 
-      const primaryRouteStops = enrichedStops.filter(s => !s.status);
+    const primaryRouteStops = enrichedStops.filter(s => !s.status);
 
-      if (primaryRouteStops.length < 2) {
-        setActiveRoute({});
-        setRouteStopMarkers([]);
-        _setRouteCoords([]);
-        return;
-      }
+    if (primaryRouteStops.length < 2) {
+      setActiveRoute({});
+      setRouteStopMarkers([]);
+      _setRouteCoords([]);
+      return;
+    }
 
-      const originStop = primaryRouteStops[0];
-      const destinationStop = primaryRouteStops[primaryRouteStops.length - 1];
-      const wp = primaryRouteStops.slice(1, primaryRouteStops.length - 1);
+    const originStop = primaryRouteStops[0];
+    const destinationStop = primaryRouteStops[primaryRouteStops.length - 1];
+    const wp = primaryRouteStops.slice(1, primaryRouteStops.length - 1);
 
-      setActiveRoute({ origin: originStop, destination: destinationStop, waypoints: wp });
+    setActiveRoute({
+      origin: originStop,
+      destination: destinationStop,
+      waypoints: wp,
+    });
 
-      const nextMarkers: MarkerItem[] = [
-        ...wp.map((c, i) => ({ id: 100 + i, title: c.name || c.address || `Punto ${i + 1}`, coordinate: c, type: 'waypoint' as const, status: c.status })),
-        { id: 2, title: destinationStop.name || destinationStop.address || 'Destino', coordinate: destinationStop, type: 'destination', status: destinationStop.status },
-      ];
+    const nextMarkers: MarkerItem[] = [
+      ...wp.map((c, i) => ({
+        id: 100 + i,
+        title: c.name || c.address || `Punto ${i + 1}`,
+        coordinate: c,
+        type: 'waypoint' as const,
+        status: c.status,
+      })),
+      {
+        id: 2,
+        title: destinationStop.name || destinationStop.address || 'Destino',
+        coordinate: destinationStop,
+        type: 'destination',
+        status: destinationStop.status,
+      },
+    ];
 
-      setRouteStopMarkers(nextMarkers);
-    },
-    [],
-  );
+    setRouteStopMarkers(nextMarkers);
+  }, []);
 
   React.useEffect(() => {
     const o = activeRoute.origin ?? origin;
@@ -296,55 +421,140 @@ export default function MapComponent({
     _setRouteCoords([o, ...(w ?? []), d]);
   }, [activeRoute, origin, destination, waypoints]);
 
+
+
+
+
+// Calcular bearing (dirección) entre dos puntos
+const calculateBearing = (prev: Coordinate | null, current: Coordinate): number => {
+  if (!prev) return 0;
+
+  const toRadians = (deg: number) => deg * (Math.PI / 180);
+  const toDegrees = (rad: number) => rad * (180 / Math.PI);
+
+  const lat1 = toRadians(prev.latitude);
+  const lat2 = toRadians(current.latitude);
+  const deltaLon = toRadians(current.longitude - prev.longitude);
+
+  const y = Math.sin(deltaLon) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLon);
+
+  let brng = Math.atan2(y, x);
+  brng = toDegrees(brng);
+  brng = (brng + 360) % 360; // Normalizar a 0-360
+
+  return brng;
+};
+
+// Seguimiento de posición anterior para calcular dirección
+const prevPositionRef = useRef<Coordinate | null>(null);
+
+// Actualizar bearing cada vez que cambia la posición
+useEffect(() => {
+  const currentPos = _driver ?? userLocation;
+  if (!currentPos) {
+    prevPositionRef.current = null;
+    return;
+  }
+
+  if (prevPositionRef.current) {
+    const newBearing = calculateBearing(prevPositionRef.current, currentPos);
+    setBearing(newBearing);
+  }
+
+  prevPositionRef.current = currentPos;
+}, [_driver, userLocation]);
+
+
+
+
+
+
+
+
+
   return (
     <View style={styles.container}>
-      {renderTopBar ? <View style={styles.topOverlay}>{renderTopBar}</View> : null}
+      {renderTopBar ? (
+        <View style={styles.topOverlay}>{renderTopBar}</View>
+      ) : null}
 
       <MapView
-          ref={mapRef}
-          style={styles.map}
-          initialRegion={{
-            latitude: (initialRegion ?? DEFAULT_REGION).latitude,
-            longitude: (initialRegion ?? DEFAULT_REGION).longitude,
-            latitudeDelta: (initialRegion ?? DEFAULT_REGION).latitudeDelta,
-            longitudeDelta: (initialRegion ?? DEFAULT_REGION).longitudeDelta,
-          }}
-          provider={PROVIDER_GOOGLE}
-          mapType="standard"
-          customMapStyle={uberLightMapStyle}
-          showsUserLocation={true}
-          showsMyLocationButton={false}
-          onUserLocationChange={e => {
-            const coord = (e && e.nativeEvent && e.nativeEvent.coordinate) || ({} as any);
-            const { latitude, longitude } = coord;
-            console.log('MapComponent onUserLocationChange', coord);
-            if (typeof latitude === 'number' && typeof longitude === 'number') {
-              const c = { latitude, longitude };
-              setUserLocation(c);
-              if (isFollowing) {
-                mapRef.current?.animateToRegion({
+        ref={mapRef}
+        style={styles.map}
+        initialRegion={{
+          latitude: (initialRegion ?? DEFAULT_REGION).latitude,
+          longitude: (initialRegion ?? DEFAULT_REGION).longitude,
+          latitudeDelta: (initialRegion ?? DEFAULT_REGION).latitudeDelta,
+          longitudeDelta: (initialRegion ?? DEFAULT_REGION).longitudeDelta,
+        }}
+        provider={PROVIDER_GOOGLE}
+        mapType="standard"
+        customMapStyle={uberLightMapStyle}
+        showsUserLocation={false}
+        showsMyLocationButton={false}
+        onUserLocationChange={e => {
+          const coord =
+            (e && e.nativeEvent && e.nativeEvent.coordinate) || ({} as any);
+          const { latitude, longitude } = coord;
+          console.log('MapComponent onUserLocationChange', coord);
+          if (typeof latitude === 'number' && typeof longitude === 'number') {
+            const c = { latitude, longitude };
+            setUserLocation(c);
+            if (isFollowing) {
+              mapRef.current?.animateToRegion(
+                {
                   latitude,
                   longitude,
                   latitudeDelta: 0.01,
                   longitudeDelta: 0.01,
-                }, 400);
-              }
+                },
+                400,
+              );
             }
-          }}
-        >
-
+          }
+        }}
+      >
         {markers.map(m => (
           <Marker key={m.id} coordinate={m.coordinate} title={m.title} />
         ))}
 
+       {(() => {
+  const coord = _driver ?? userLocation ?? {
+    latitude: (initialRegion ?? DEFAULT_REGION).latitude,
+    longitude: (initialRegion ?? DEFAULT_REGION).longitude,
+  };
 
-        {(_driver ?? userLocation) && (
-          <Marker coordinate={(_driver ?? userLocation) as Coordinate} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false}>
-            <Image source={CarSport} style={[styles.carMarker, driverIconColor ? { tintColor: driverIconColor } : null]} />
-          </Marker>
-        )}
+  const hasActiveRoute = !!(activeRoute.origin ?? origin) && !!(activeRoute.destination ?? destination);
+  const carWidth = hasActiveRoute ? 70 : 90;
+  const carHeight = hasActiveRoute ? 70 : 90;
 
-        {routeStopMarkers.map((marker) => (
+  return (
+    <Marker
+      coordinate={coord as Coordinate}
+      anchor={{ x: 0.5, y: 0.5 }}
+      tracksViewChanges={false}
+      zIndex={999}
+    >
+      <Animated.View
+        style={{
+          transform: [{ rotate: rotation.interpolate({
+            inputRange: [0, 360],
+            outputRange: ['0deg', '360deg']
+          })}],
+        }}
+      >
+        <CarIcon
+          width={carWidth}
+          height={carHeight}
+          fill={driverIconColor || '#000'}
+        />
+      </Animated.View>
+    </Marker>
+  );
+})()}
+
+        {routeStopMarkers.map(marker => (
           <Marker
             key={marker.id}
             coordinate={marker.coordinate}
@@ -352,21 +562,26 @@ export default function MapComponent({
             anchor={{ x: 0.5, y: 0.5 }}
             tracksViewChanges={false}
           >
-            { marker.type === 'destination' ? (
-              <MarkerDestination width={30} height={50} fill="#2563EB" color="#2563EB" />
-            ) : marker.nameRol === 'conductor' ? (
-              <MarkerMe width={22} height={22} fill="#000" />
+            {marker.type === 'destination' ? (
+              <MarkerDestination
+                width={30}
+                height={50}
+                fill="#2563EB"
+                color="#2563EB"
+              />
             ) : (
               <MarkerOrigin
                 width={22}
                 height={22}
-                fill ={(marker.status === 'green') ? '#10B981' : '#EF4444'}
+                fill={marker.status === 'green' ? '#10B981' : '#EF4444'}
               />
             )}
           </Marker>
         ))}
 
-        {(userLocation || directionsData.o) && directionsData.d && directionsData.googleKey ? (
+        {(userLocation || directionsData.o) &&
+        directionsData.d &&
+        directionsData.googleKey ? (
           <MapViewDirections
             origin={userLocation ?? directionsData.o}
             destination={directionsData.d}
@@ -378,12 +593,14 @@ export default function MapComponent({
             mode="DRIVING"
             onReady={() => {}}
             onError={_errorMessage => {
-              Alert.alert('Ruta', 'No se pudo trazar la ruta con Google Directions');
+              Alert.alert(
+                'Ruta',
+                'No se pudo trazar la ruta con Google Directions',
+              );
             }}
           />
         ) : null}
-
-        </MapView>
+      </MapView>
 
       <View style={styles.followButtonContainer}>
         {BottomContentComp ? (
@@ -401,12 +618,15 @@ export default function MapComponent({
             const c = userLocation;
             if (c) {
               setIsFollowing(true);
-              mapRef.current?.animateToRegion({
-                latitude: c.latitude,
-                longitude: c.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-              }, 400);
+              mapRef.current?.animateToRegion(
+                {
+                  latitude: c.latitude,
+                  longitude: c.longitude,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                },
+                400,
+              );
               return;
             }
 
@@ -416,7 +636,15 @@ export default function MapComponent({
                 const coord = { latitude, longitude };
                 setUserLocation(coord);
                 setIsFollowing(true);
-                mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 400);
+                mapRef.current?.animateToRegion(
+                  {
+                    latitude,
+                    longitude,
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
+                  },
+                  400,
+                );
               },
               _err => {
                 const id = Geolocation.watchPosition(
@@ -425,14 +653,26 @@ export default function MapComponent({
                     const coord2 = { latitude, longitude };
                     setUserLocation(coord2);
                     setIsFollowing(true);
-                    mapRef.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 400);
+                    mapRef.current?.animateToRegion(
+                      {
+                        latitude,
+                        longitude,
+                        latitudeDelta: 0.01,
+                        longitudeDelta: 0.01,
+                      },
+                      400,
+                    );
                     Geolocation.clearWatch(id);
                   },
                   () => {},
-                  { enableHighAccuracy: true, distanceFilter: 0, interval: 2000 }
+                  {
+                    enableHighAccuracy: true,
+                    distanceFilter: 0,
+                    interval: 2000,
+                  },
                 );
               },
-              { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+              { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 },
             );
           }}
         >
@@ -452,15 +692,27 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
   topOverlay: {
-    position: 'absolute', top: 0, left: 0, right: 0, zIndex: 40
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 40,
   },
   mapFallback: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    alignItems: 'center', justifyContent: 'center'
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   mapFallbackText: {
-    color: '#333', backgroundColor: '#FFFFFFEE',
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8
+    color: '#333',
+    backgroundColor: '#FFFFFFEE',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
 
   followButtonContainer: {
@@ -472,7 +724,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     zIndex: 50,
   },
-   followButton: {
+  followButton: {
     alignSelf: 'flex-end',
     position: 'absolute',
     right: 12,
@@ -489,7 +741,12 @@ const styles = StyleSheet.create({
   },
   aimstyles: { width: 28, height: 28, tintColor: '#C1C0C9' },
   reportsButtonContainer: { position: 'absolute', zIndex: 30 },
-  reportsButton: { backgroundColor: '#6D28D9', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8 },
+  reportsButton: {
+    backgroundColor: '#6D28D9',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
   reportsButtonText: { color: '#fff', fontSize: 12, fontWeight: '600' },
-  carMarker: { width: 64, height: 36, resizeMode: 'contain' },
+  carMarker: { width: 54, height: 36, resizeMode: 'contain' },
 });
