@@ -10,6 +10,7 @@ type Props = {
 
 export default function MenuRoutes(props: Props) {
   const insets = useSafeAreaInsets();
+
   const FIXED_HEIGHT = Math.round(Dimensions.get('window').height * 0.32 ) + insets.bottom;
 
   return (
