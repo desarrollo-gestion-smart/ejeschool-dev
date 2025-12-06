@@ -38,7 +38,6 @@ type Props = {
   waypoints?: Coordinate[];
   driverIconColor?: string;
   driverDeviceId?: string | number;
-  lockOnDriver?: boolean;
 };
 
 const getMapsApiKey = (): string => {
@@ -81,7 +80,6 @@ export default function MapComponent({
   waypoints,
   driverIconColor,
   driverDeviceId,
-  lockOnDriver = true,
 }: Props) {
 
   const uberLightMapStyle = [
@@ -278,9 +276,8 @@ export default function MapComponent({
       setActiveRoute({ origin: originStop, destination: destinationStop, waypoints: wp });
 
       const nextMarkers: MarkerItem[] = [
-        { id: 1, title: originStop.name || originStop.address || 'Origen', coordinate: originStop, type: 'origin', status: originStop.status, nameRol: (originStop as any).nameRol },
-        ...wp.map((c, i) => ({ id: 100 + i, title: c.name || c.address || `Punto ${i + 1}`, coordinate: c, type: 'waypoint' as const, status: c.status, nameRol: (c as any).nameRol })),
-        { id: 2, title: destinationStop.name || destinationStop.address || 'Destino', coordinate: destinationStop, type: 'destination', status: destinationStop.status, nameRol: (destinationStop as any).nameRol },
+        ...wp.map((c, i) => ({ id: 100 + i, title: c.name || c.address || `Punto ${i + 1}`, coordinate: c, type: 'waypoint' as const, status: c.status })),
+        { id: 2, title: destinationStop.name || destinationStop.address || 'Destino', coordinate: destinationStop, type: 'destination', status: destinationStop.status },
       ];
 
       setRouteStopMarkers(nextMarkers);
@@ -298,10 +295,6 @@ export default function MapComponent({
     }
     _setRouteCoords([o, ...(w ?? []), d]);
   }, [activeRoute, origin, destination, waypoints]);
-
-  React.useEffect(() => {
-    fitToRoute();
-  }, [routeCoords]);
 
   return (
     <View style={styles.container}>
@@ -361,17 +354,13 @@ export default function MapComponent({
           >
             { marker.type === 'destination' ? (
               <MarkerDestination width={30} height={50} fill="#2563EB" color="#2563EB" />
-            ) : (String((marker as any).nameRol || '').toLowerCase() === 'conductor') ? (
+            ) : marker.nameRol === 'conductor' ? (
               <MarkerMe width={22} height={22} fill="#000" />
-            ) : marker.type === 'origin' ? (
-              <MarkerOrigin width={22} height={22}          
-               fill={(marker.status === 'green') ? '#10B981' : '#EF4444'}
- />
             ) : (
               <MarkerOrigin
                 width={22}
                 height={22}
-                fill={(marker.status === 'green') ? '#10B981' : '#EF4444'}
+                fill ={(marker.status === 'green') ? '#10B981' : '#EF4444'}
               />
             )}
           </Marker>
@@ -387,16 +376,7 @@ export default function MapComponent({
             strokeColor="#707070"
             resetOnChange={false}
             mode="DRIVING"
-            onReady={(result) => {
-              if (lockOnDriver) return;
-              const coords = result?.coordinates || [];
-              if (coords.length > 0) {
-                mapRef.current?.fitToCoordinates(coords as any, {
-                  edgePadding: { top: 200, right: 200, bottom: 100, left: 110 },
-                  animated: true,
-                });
-              }
-            }}
+            onReady={() => {}}
             onError={_errorMessage => {
               Alert.alert('Ruta', 'No se pudo trazar la ruta con Google Directions');
             }}
@@ -492,12 +472,12 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     zIndex: 50,
   },
-  followButton: {
+   followButton: {
     alignSelf: 'flex-end',
     position: 'absolute',
     right: 12,
-    bottom: 350,
-    backgroundColor: '#6D28D9',
+    bottom: 220,
+    backgroundColor: '#FFFFFFEE',
     borderRadius: 30,
     padding: 8,
     elevation: 24,
@@ -507,8 +487,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     zIndex: 100,
   },
-  aimstyles: { width: 28, height: 28, tintColor: '#FFFFFF' },
-  aimstyles: { width: 28, height: 28, tintColor: '#FFFFFF' },
+  aimstyles: { width: 28, height: 28, tintColor: '#C1C0C9' },
   reportsButtonContainer: { position: 'absolute', zIndex: 30 },
   reportsButton: { backgroundColor: '#6D28D9', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8 },
   reportsButtonText: { color: '#fff', fontSize: 12, fontWeight: '600' },

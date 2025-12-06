@@ -58,26 +58,6 @@ export default function AppNavigator() {
 
   return (
     <NavigationContainer>
-<<<<<<< HEAD
-      <Stack.Navigator
-        initialRouteName={initial}
-        screenOptions={{ headerShown: false }}
-      >
-        <Stack.Screen name="InitialLogins" component={InitialLogins} />  
-
-        <Stack.Screen name="LoginFather" component={LoginFather} />
-        <Stack.Screen name="LoginDriver" component={LoginDriver} />
-        <Stack.Screen name="RegisterStudent" component={RegisterStudent} />
-
-        <Stack.Screen name="PageDriver" component={PageDriver} />
-        <Stack.Screen name="PageFather" component={PageFather} />
-        <Stack.Screen name="DashboardFather" component={DashboardFather}  />
-        <Stack.Screen name="ChatSupport" component={ChatSupport} />
-        <Stack.Screen name="Notifications" component={Notifications} />
-        <Stack.Screen name="MyAccount" component={MyAccount} />
-        <Stack.Screen name="Historias" component={Historias} />
-      </Stack.Navigator>
-=======
       {ready ? (
         <Stack.Navigator
           initialRouteName={initial}
@@ -99,7 +79,6 @@ export default function AppNavigator() {
       ) : (
         <View />
       )}
->>>>>>> dev
     </NavigationContainer>
   );
 }

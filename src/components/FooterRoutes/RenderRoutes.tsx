@@ -13,12 +13,7 @@ export type Coordinate = {
 };
 
 import VehicleIcon from '../../assets/icons/car-black.svg';
-<<<<<<< HEAD
-import MarkerOrigin from '../../assets/markers/marker-origin-own.svg';
-import MarkerDestination from '../../assets/markers/marker-destination.svg';
-import AvatarBadge from '../AvatarBadge';
-=======
->>>>>>> dev
+
 
 type Props = {
   title?: string;
@@ -82,124 +77,7 @@ export default function RoutesMenu({
 
   // Details are rendered by DetailRoutes component
 
-<<<<<<< HEAD
-  React.useEffect(() => {
-    const run = async () => {
-      if (!selected || orderedStops.length === 0) return;
-      const pairs = await Promise.all(
-        orderedStops.map(async (c, idx) => {
-          const addr = await getAddressFromCoordinates(c.latitude, c.longitude);
-          const fallback = c.address ? String(c.address).split(',')[0].trim() : '';
-          return [`${selected.id}-${idx}`, addr || fallback];
-        })
-      );
-      const next: Record<string, string> = {};
-      for (const [k, v] of pairs) {
-        if (v) next[k as string] = v as string;
-      }
-      setAddressMap(prev => ({ ...prev, ...next }));
-    };
-    run();
-  }, [selected, orderedStops, getAddressFromCoordinates]);
-
-  const renderDetails = () => {
-  if (!selected) return null;
-  const totalMin = parseMinutes(selected.time);
-  const perLeg = computePerLegMinutes(orderedStops, totalMin);
-
-  let remaining = totalMin;
-
-  return (
-    <ScrollView
-      showsVerticalScrollIndicator={true}
-      style={styles.detailsScroll}
-    >
-        {orderedStops.map((c, routeIdx) => {
-          const isFirst = routeIdx === 0;
-          const isLast = routeIdx === orderedStops.length - 1;
-          const stopTitle = isFirst
-            ? (selected.students?.[routeIdx] || `Punto ${routeIdx + 1}`)
-            : isLast
-              ? (c.name || 'Destino')
-              : (c.name || `Punto ${routeIdx + 1}`);
-          const legMin = routeIdx < perLeg.length ? perLeg[routeIdx] : 0;
-          remaining = !isLast ? Math.max(0, remaining - legMin) : remaining;
-
-          const displayName = (selected.students?.[routeIdx] || c.name || stopTitle || '').trim();
-          const initials = displayName
-            .split(/\s+/)
-            .filter(Boolean)
-            .slice(0, 2)
-            .map(w => w[0]?.toUpperCase() || '')
-            .join('') || '·';
-          const avatarColor = isFirst
-            ? '#2563EB'
-            : isLast
-              ? '#2563EB'
-              : (c.status === 'green' ? '#10B981' : '#EF4444');
-
-          return (
-            <View key={`${selected.id}-${routeIdx}`} style={styles.stopRow}>
-              <View style={styles.stopLeft}>
-             
-                <View style={styles.stopIconCol}>
-                  {!isFirst && <View style={styles.connectorTop} />}
-                  {isFirst ? (
-                    <MarkerOrigin width={22} height={22} fill='#EF4444' stroke="#fff" strokeWidth={2.5} />
-                  ) : isLast ? (
-                    <MarkerDestination width={23} height={23} fill="#2563EB" color="#2563EB" />
-                  ) : c.status === 'green' ? (
-                    <MarkerOrigin width={22} height={22} fill="#10B981" stroke="#fff" strokeWidth={2.5} />
-                  ) : (
-                    <MarkerOrigin width={22} height={22} fill="#EF4444" stroke="#fff" strokeWidth={2.5} />
-                  )}
-                  {!isLast && <View style={styles.connectorBottom} />}
-                </View>
-                <View style={styles.stopTextCol}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.stopCoord}>
-                        {addressMap[`${selected.id}-${routeIdx}`] || c.address || ''}
-                      </Text>
-                      <Text style={styles.stopTitle}>{stopTitle}</Text>
-                    </View>
-                    <AvatarBadge
-                      size={35}
-                      backgroundColor={avatarColor}
-                      text={initials}
-                      textColor="#FFFFFF"
-                      style={{ marginRight: 30 }}
-                    />
-                  </View>
-                </View>
-             
-              </View>
-
-
-            </View>
-          );
-        })}
-        <View style={styles.detailsHeader}>
-        <TouchableOpacity
-          style={styles.finalizeButton}
-          onPress={() => {
-            onRouteSelect?.([]);
-            setSelected(null);
-            onModeChange?.(false);
-          }}
-        >
-          <Text style={styles.finalizeButtonText}>Finalizar ruta</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
-  );
-};
-
-  const headerTitle = selected ? null : title;
-=======
   const headerTitle = title;
->>>>>>> dev
 
   return (
     <View style={styles.container}>
